@@ -1,0 +1,2941 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记忆迷宫</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+:root[data-theme="dark"]{
+  --bg:#0a0a0a;
+  --bg-panel:rgba(17,17,17,0.9);
+  --bg-panel-solid:#111;
+  --text:#ffffff;
+  --text-dim:rgba(255,255,255,0.7);
+  --text-dimmer:rgba(255,255,255,0.5);
+  --text-faint:rgba(255,255,255,0.35);
+  --text-faintest:rgba(255,255,255,0.15);
+  --border:rgba(255,255,255,0.3);
+  --border-light:rgba(255,255,255,0.15);
+  --border-lighter:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.6);
+  --border-btn:rgba(255,255,255,0.5);
+  --bg-input:rgba(0,0,0,0.6);
+  --bg-hover:rgba(255,255,255,0.03);
+  --bg-card:rgba(255,255,255,0.02);
+  --bg-card-done:rgba(255,255,255,0.04);
+  --bg-inv:rgba(0,0,0,0.4);
+  --overlay-bg:rgba(0,0,0,0.6);
+  --overlay-light:rgba(0,0,0,0.4);
+  --overlay-strong:rgba(0,0,0,0.8);
+  --start-bg:#000;
+  --maze-wall:rgba(255,255,255,0.3);
+  --maze-path:transparent;
+  --select-opt-bg:#0a0a0a;
+  --select-opt-text:rgba(255,255,255,0.8);
+  --accent:#00e5ff;
+  --accent-dim:rgba(0,229,255,0.3);
+  --accent-glow:rgba(0,229,255,0.15);
+  --accent-strong:rgba(0,229,255,0.5);
+  --particle-dot:rgba(255,255,255,0.5);
+  --particle-dot-alt:rgba(0,229,255,0.5);
+  --particle-line:rgba(0,229,255,0.15);
+  --gold:#f1c40f;
+  --gold-dim:rgba(241,196,15,0.3);
+  --gold-glow:rgba(241,196,15,0.4);
+  --gold-shadow:rgba(241,196,15,0.15);
+  --green:#2ecc71;
+  --red:#e74c3c;
+}
+:root[data-theme="light"]{
+  --bg:#f5f5f5;
+  --bg-panel:rgba(245,245,245,0.95);
+  --bg-panel-solid:#f0f0f0;
+  --text:#333333;
+  --text-dim:rgba(51,51,51,0.7);
+  --text-dimmer:rgba(51,51,51,0.5);
+  --text-faint:rgba(51,51,51,0.35);
+  --text-faintest:rgba(51,51,51,0.15);
+  --border:rgba(0,0,0,0.2);
+  --border-light:rgba(0,0,0,0.1);
+  --border-lighter:rgba(0,0,0,0.05);
+  --border-strong:rgba(0,0,0,0.4);
+  --border-btn:rgba(0,0,0,0.35);
+  --bg-input:rgba(0,0,0,0.05);
+  --bg-hover:rgba(0,0,0,0.03);
+  --bg-card:rgba(0,0,0,0.02);
+  --bg-card-done:rgba(0,0,0,0.04);
+  --bg-inv:rgba(0,0,0,0.06);
+  --overlay-bg:rgba(0,0,0,0.3);
+  --overlay-light:rgba(0,0,0,0.15);
+  --overlay-strong:rgba(0,0,0,0.5);
+  --start-bg:#f5f5f5;
+  --maze-wall:rgba(0,0,0,0.25);
+  --maze-path:#f0f0f0;
+  --select-opt-bg:#f5f5f5;
+  --select-opt-text:rgba(51,51,51,0.8);
+  --accent:#0097a7;
+  --accent-dim:rgba(0,151,167,0.3);
+  --accent-glow:rgba(0,151,167,0.15);
+  --accent-strong:rgba(0,151,167,0.5);
+  --particle-dot:rgba(51,51,51,0.4);
+  --particle-dot-alt:rgba(0,151,167,0.5);
+  --particle-line:rgba(0,151,167,0.12);
+  --gold:#c49000;
+  --gold-dim:rgba(196,144,0,0.3);
+  --gold-glow:rgba(196,144,0,0.4);
+  --gold-shadow:rgba(196,144,0,0.15);
+  --green:#1b8c4e;
+  --red:#c0392b;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg);
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;
+  color:var(--text);overflow:hidden;
+  transition:background .2s,color .2s;
+}
+.top-bar,.reward-panel,.result-panel-content,.shop-panel-content,.ach-panel-content,.checkin-panel-content,.lb-panel-content,.name-modal-content,.ad-panel-content,.withdraw-panel-content,.canvas-wrap,.msg-toast,.inv-slot,.start-overlay,.game-logo,.hint-bar,.btn,.shop-btn,.share-btn,.ach-btn,.checkin-btn,.lb-btn,.theme-toggle-btn{
+  transition:background .2s,color .2s,border-color .2s,border .2s,box-shadow .2s;
+}
+.game-container{
+  position:relative;width:100vw;height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+
+.game-main{
+  display:flex;align-items:center;justify-content:center;
+}
+
+.timer-ring-wrap{
+  position:absolute;
+  right:-150px;
+  top:50%;transform:translateY(-50%);
+  width:120px;height:120px;
+  opacity:0;transition:opacity .3s;pointer-events:none;
+}
+.timer-ring-wrap.visible{opacity:1}
+
+.game-logo{
+  position:fixed;top:16px;left:24px;z-index:40;
+  display:flex;align-items:center;gap:8px;
+  font-size:14px;font-weight:300;letter-spacing:2px;
+  color:var(--text-dimmer);
+}
+.game-logo i{font-size:18px;color:var(--text-faint)}
+
+.top-bar{
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  display:flex;align-items:center;justify-content:center;
+  padding:12px 24px;
+  border-bottom:1px solid var(--border-light);
+  background:transparent;
+}
+.top-bar-center{
+  display:flex;align-items:center;gap:0;
+}
+.top-bar-item{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:6px 24px;position:relative;
+}
+.top-bar-item+.top-bar-item::before{
+  content:'';position:absolute;left:0;top:20%;bottom:20%;
+  width:1px;background:var(--border-light);
+}
+.top-bar-label{
+  font-size:11px;color:var(--text-dimmer);font-weight:300;
+  text-transform:uppercase;letter-spacing:2px;
+}
+.top-bar-value{
+  font-size:24px;color:var(--text);font-weight:300;font-family:monospace;
+}
+.top-bar-value.difficulty-easy{color:var(--green)}
+.top-bar-value.difficulty-medium{color:#f39c12}
+.top-bar-value.difficulty-hard{color:var(--red)}
+.top-bar-value.score-val{color:var(--gold)}
+.level-select-wrap{
+  position:relative;display:inline-block;
+}
+.level-select-wrap::after{
+  content:'\f107';font-family:'Font Awesome 6 Free';font-weight:900;
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  font-size:10px;color:var(--text-faint);pointer-events:none;
+}
+.level-select-wrap select{
+  -webkit-appearance:none;-moz-appearance:none;appearance:none;
+  background:var(--overlay-bg);color:var(--text-dim);
+  border:1px solid var(--border-light);
+  padding:4px 28px 4px 12px;font-size:16px;font-weight:300;font-family:monospace;
+  cursor:pointer;outline:none;text-align:center;
+  border-radius:10px;letter-spacing:1px;
+  transition:border-color .2s,color .2s;
+}
+.level-select-wrap select:hover{
+  border-color:var(--text-dimmer);color:var(--text);
+}
+.level-select-wrap select:focus{
+  border-color:var(--accent);
+}
+.level-select-wrap select option{
+  background:var(--select-opt-bg);color:var(--select-opt-text);
+  padding:8px 12px;font-weight:300;
+  border-bottom:1px solid var(--border-lighter);
+}
+
+.timer-ring-canvas{width:120px;height:120px}
+
+.side-panel-right{display:none}
+
+.reward-panel{
+  position:absolute;
+  left:-190px;top:50%;transform:translateY(-50%);z-index:30;
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  padding:24px 20px;min-width:120px;
+  border:1px solid var(--border-light);
+  background:var(--overlay-light);
+  border-radius:10px;
+}
+.reward-label{
+  font-size:10px;color:var(--text-faint);font-weight:300;
+  text-transform:uppercase;letter-spacing:2px;
+}
+.reward-amount{
+  font-size:32px;font-weight:300;font-family:monospace;
+  color:var(--gold);
+  text-shadow:0 0 12px var(--gold-glow),0 0 24px var(--gold-shadow);
+  transition:transform .3s;
+}
+.reward-amount.bump{animation:amountBump .4s ease}
+@keyframes amountBump{0%{transform:scale(1)}30%{transform:scale(1.2)}100%{transform:scale(1)}}
+.reward-target{
+  font-size:11px;color:var(--text-faint);font-weight:300;letter-spacing:1px;
+}
+.reward-progress-wrap{
+  width:100%;height:4px;background:var(--border-lighter);position:relative;
+}
+.reward-progress-bar{
+  height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-dim));
+  transition:width .6s ease;position:relative;
+}
+.reward-progress-bar::after{
+  content:'';position:absolute;right:0;top:-2px;
+  width:8px;height:8px;border-radius:50%;
+  background:var(--gold);box-shadow:0 0 8px var(--gold-dim);
+}
+.reward-pct{
+  font-size:10px;color:var(--text-faint);font-weight:300;font-family:monospace;
+}
+
+.coin-fly{
+  position:fixed;z-index:200;pointer-events:none;
+  font-size:20px;color:var(--gold);
+  animation:coinFlyUp .8s ease-out forwards;
+}
+@keyframes coinFlyUp{
+  0%{opacity:1;transform:translateY(0) scale(1)}
+  100%{opacity:0;transform:translateY(-80px) scale(0.5)}
+}
+.money-break{
+  position:fixed;z-index:200;pointer-events:none;
+  font-size:24px;color:var(--red);
+  animation:moneyBreak .6s ease-out forwards;
+}
+@keyframes moneyBreak{
+  0%{opacity:1;transform:scale(1)}
+  50%{opacity:0.8;transform:scale(1.3) rotate(10deg)}
+  100%{opacity:0;transform:scale(0.3) rotate(-20deg)}
+}
+.withdraw-panel{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-bg);z-index:150;
+  opacity:0;pointer-events:none;transition:opacity .4s;
+}
+.withdraw-panel.active{opacity:1;pointer-events:auto}
+.withdraw-panel-content{
+  background:var(--bg-panel-solid);border:2px solid var(--gold);
+  padding:40px 50px;text-align:center;min-width:300px;
+  border-radius:10px;
+  animation:resultPop .4s ease;
+}
+.withdraw-panel-title{font-size:24px;color:var(--gold);font-weight:300;letter-spacing:3px;margin-bottom:12px}
+.withdraw-panel-sub{font-size:13px;color:var(--text-dimmer);font-weight:300;margin-bottom:24px;line-height:1.6}
+.withdraw-panel .btn{min-width:160px;border-color:var(--gold);color:var(--gold)}
+.withdraw-panel .btn:hover{background:var(--gold);color:var(--bg-panel-solid)}
+
+.ad-panel{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-strong);z-index:200;
+  opacity:0;pointer-events:none;transition:opacity .4s;
+}
+.ad-panel.active{opacity:1;pointer-events:auto}
+.ad-panel-content{
+  background:var(--bg-panel-solid);border:2px solid var(--border);
+  padding:40px 50px;text-align:center;min-width:280px;
+  border-radius:10px;
+  animation:resultPop .4s ease;
+}
+.ad-panel-title{font-size:20px;color:var(--text-dim);font-weight:300;letter-spacing:2px;margin-bottom:16px}
+.ad-panel-count{font-size:48px;color:var(--accent);font-family:monospace;font-weight:300;margin-bottom:12px}
+.ad-panel-sub{font-size:11px;color:var(--text-faint);font-weight:300;letter-spacing:1px}
+.ad-skip-btn{
+  margin-top:20px;padding:8px 20px;border:1px solid var(--border-light);
+  border-radius:10px;font-size:11px;font-weight:300;cursor:pointer;
+  background:transparent;color:var(--text-faint);font-family:inherit;
+  letter-spacing:1px;transition:all .2s;
+}
+.ad-skip-btn:hover{border-color:var(--text-dimmer);color:var(--text-dimmer)}
+
+.btn-revive{
+  border-color:var(--green)!important;color:var(--green)!important;
+}
+.btn-revive:hover{background:var(--green)!important;color:var(--bg-panel-solid)!important}
+.btn-gray{
+  border-color:var(--text-faint)!important;color:var(--text-faint)!important;
+}
+.btn-gray:hover{background:var(--border)!important;color:var(--text-dimmer)!important}
+
+.result-panel{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-light);
+  z-index:100;opacity:0;pointer-events:none;transition:opacity .4s;
+}
+.result-panel.active{opacity:1;pointer-events:auto}
+.result-panel-content{
+  background:var(--bg-panel);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:2px solid var(--border-strong);
+  border-radius:10px;
+  padding:40px 50px;text-align:center;min-width:320px;
+  animation:resultPop .4s ease;
+}
+@keyframes resultPop{from{opacity:0;transform:scale(0.85)}to{opacity:1;transform:scale(1)}}
+.result-panel-icon{font-size:48px;margin-bottom:16px}
+.result-panel-icon.win{color:var(--gold)}
+.result-panel-icon.lose{color:var(--red)}
+.result-panel-title{font-size:28px;font-weight:300;margin-bottom:8px;letter-spacing:4px}
+.result-panel-title.win{color:var(--gold)}
+.result-panel-title.lose{color:var(--red)}
+.result-panel-sub{font-size:13px;color:var(--text-dimmer);margin-bottom:24px;line-height:1.6;font-weight:300}
+.result-panel .btn{min-width:160px}
+.win-reward-line{
+  font-size:15px;color:var(--text-dimmer);font-weight:300;
+  margin:6px 0;line-height:1.8;
+}
+.win-reward-line .gold{
+  color:var(--gold);font-family:monospace;font-weight:400;
+  text-shadow:0 0 8px var(--gold-dim);
+}
+.win-reward-line .cyan{
+  color:var(--accent);font-family:monospace;font-weight:400;
+  text-shadow:0 0 8px var(--accent-dim);
+}
+.win-reward-line .icon{
+  margin-right:6px;font-size:14px;
+}
+.win-reward-line .icon-gold{color:var(--gold);text-shadow:0 0 8px var(--gold-glow)}
+.win-reward-line .icon-cyan{color:var(--accent);text-shadow:0 0 8px var(--accent-dim)}
+.win-reward-line .icon-red{color:var(--red);text-shadow:0 0 8px rgba(231,76,60,0.4)}
+.result-panel-icon.win i{
+  color:var(--gold);font-size:48px;
+  text-shadow:0 0 20px var(--gold-dim),0 0 40px var(--gold-shadow);
+  animation:iconPulse 1.5s ease-in-out infinite;
+}
+.result-panel-icon.lose i{
+  color:var(--red);font-size:48px;
+  text-shadow:0 0 20px rgba(231,76,60,0.5),0 0 40px rgba(231,76,60,0.2);
+  animation:iconShake .5s ease;
+}
+@keyframes iconPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+@keyframes iconShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-4px)}40%{transform:translateX(4px)}60%{transform:translateX(-2px)}80%{transform:translateX(2px)}}
+.win-motivate{
+  font-size:12px;color:var(--text-faint);font-weight:300;
+  margin-top:12px;line-height:1.6;letter-spacing:1px;
+}
+.win-motivate .highlight{color:var(--gold);font-weight:400}
+
+.btn{
+  padding:12px 28px;border:1px solid var(--border-btn);
+  border-radius:10px;font-size:14px;font-weight:300;
+  cursor:pointer;transition:all .2s;letter-spacing:2px;
+  background:transparent;color:var(--text-dim);
+  font-family:inherit;
+}
+.btn:hover{border-color:var(--text);color:var(--text)}
+.btn:active{transform:scale(0.97)}
+
+.canvas-wrap{
+  position:relative;border-radius:0;overflow:visible;
+  border:1px solid var(--border-light);
+  background:var(--bg-hover);
+  animation:fadeIn .6s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+canvas{display:block}
+
+.msg-toast{
+  position:fixed;bottom:24px;right:24px;z-index:60;
+  background:transparent;
+  border:1px solid var(--border);
+  border-left:2px solid var(--green);
+  border-radius:10px;
+  padding:10px 16px;font-size:12px;color:var(--text-dim);
+  max-width:260px;transition:all .3s;opacity:0;transform:translateY(10px);
+  pointer-events:none;font-weight:300;
+}
+.msg-toast.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+.msg-toast.success{border-left-color:var(--green)}
+.msg-toast.fail{border-left-color:var(--red)}
+.msg-toast.hint{border-left-color:var(--accent)}
+.msg-toast.memorize{border-left-color:var(--gold)}
+
+.overlay{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-light);
+  border-radius:10px;
+  opacity:0;pointer-events:none;transition:opacity .4s;
+}
+.overlay.active{opacity:1;pointer-events:auto}
+.overlay-content{text-align:center}
+.overlay-title{font-size:36px;font-weight:300;margin-bottom:8px;letter-spacing:3px}
+.overlay-title.win{color:var(--green)}
+.overlay-title.lose{color:var(--red)}
+.overlay-sub{font-size:14px;color:var(--text-dimmer);font-weight:300}
+
+.memory-bar-wrap{
+  width:260px;height:4px;background:var(--border);
+  margin:10px auto 0;overflow:hidden;
+}
+.memory-bar{
+  height:100%;background:var(--text-dimmer);
+  transition:width 0.1s linear;
+}
+
+.start-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:var(--start-bg);
+  z-index:999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  transition:opacity .6s;
+}
+.start-overlay.hidden{opacity:0;pointer-events:none}
+#particleCanvas{
+  position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:998;pointer-events:none;
+}
+.start-overlay-title{
+  font-size:42px;font-weight:100;letter-spacing:8px;
+  margin-bottom:6px;color:var(--text);position:relative;z-index:999;
+}
+.start-overlay-subtitle{
+  font-size:14px;font-weight:300;letter-spacing:6px;
+  color:var(--text-faint);margin-bottom:40px;position:relative;z-index:999;
+}
+.start-overlay-btn{
+  position:relative;z-index:999;
+  padding:14px 48px;border:1px solid var(--border-strong);
+  border-radius:40px;font-size:16px;font-weight:300;
+  cursor:pointer;letter-spacing:4px;
+  background:var(--overlay-bg);color:var(--text-dim);
+  font-family:inherit;margin-bottom:36px;
+  overflow:hidden;
+  animation:btnBreathe 2s ease-in-out infinite, btnPulse 3s ease-in-out infinite;
+  transition:transform .2s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,border-color .2s,color .2s,font-weight .2s;
+}
+@keyframes btnBreathe{
+  0%,100%{box-shadow:0 0 15px var(--accent-glow),0 0 30px var(--accent-dim)}
+  50%{box-shadow:0 0 25px var(--accent-dim),0 0 50px var(--accent-glow)}
+}
+@keyframes btnPulse{
+  0%,85%,100%{transform:scale(1)}
+  90%{transform:scale(1.05)}
+  95%{transform:scale(0.98)}
+}
+.start-overlay-btn:hover{
+  transform:scale(1.05);
+  border-color:var(--accent);color:var(--accent);font-weight:400;
+  box-shadow:0 0 30px var(--accent-dim),0 0 60px var(--accent-glow);
+  animation:btnBreathe 2s ease-in-out infinite;
+}
+.start-overlay-btn:active{
+  transform:scale(0.95);
+  box-shadow:0 0 10px var(--accent-dim);
+  animation:none;
+}
+.start-overlay-btn .btn-text{
+  position:relative;z-index:2;
+  animation:neonFlicker 4s ease-in-out infinite;
+}
+@keyframes neonFlicker{
+  0%,100%{opacity:1}
+  4%{opacity:0.8}
+  6%{opacity:1}
+  50%{opacity:1}
+  52%{opacity:0.7}
+  53%{opacity:1}
+  80%{opacity:1}
+  82%{opacity:0.85}
+  83%{opacity:1}
+}
+.start-overlay-btn .btn-glow-line{
+  position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,var(--accent-dim),transparent);
+  z-index:1;
+  animation:glowSweep 3s ease-in-out infinite;
+}
+@keyframes glowSweep{
+  0%{left:-100%}
+  50%{left:150%}
+  100%{left:150%}
+}
+.start-overlay-btn .btn-ripple{
+  position:absolute;border-radius:50%;
+  background:var(--accent-dim);
+  transform:scale(0);opacity:1;
+  pointer-events:none;z-index:3;
+  animation:rippleOut .6s ease-out forwards;
+}
+@keyframes rippleOut{
+  to{transform:scale(4);opacity:0}
+}
+.start-overlay-info{
+  font-size:12px;color:var(--text-faint);font-weight:300;
+  line-height:2;text-align:center;letter-spacing:1px;
+  position:relative;z-index:999;
+}
+.start-overlay-info kbd{
+  background:transparent;border:1px solid var(--border-light);
+  border-radius:3px;padding:2px 6px;font-size:11px;color:var(--text-dimmer);
+}
+
+.hint-bar{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  display:flex;gap:18px;font-size:11px;color:var(--text-faint);z-index:30;font-weight:300;
+}
+.hint-bar kbd{
+  background:transparent;border:1px solid var(--border-light);
+  border-radius:10px;padding:1px 5px;font-size:10px;color:var(--text-faint);
+}
+
+.shop-btn{
+  position:absolute;right:92px;
+  padding:8px 20px;border:1px solid var(--border-btn);
+  border-radius:10px;font-size:13px;font-weight:300;
+  cursor:pointer;letter-spacing:2px;
+  background:transparent;color:var(--text-dim);
+  font-family:inherit;transition:all .2s;
+}
+.shop-btn:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px var(--gold-dim)}
+.shop-btn i{margin-right:6px;font-size:14px}
+
+.share-btn{
+  position:absolute;right:200px;
+  padding:8px 20px;border:1px solid var(--border-btn);
+  border-radius:10px;font-size:13px;font-weight:300;
+  cursor:pointer;letter-spacing:2px;
+  background:transparent;color:var(--text-dim);
+  font-family:inherit;transition:all .2s;
+}
+.share-btn:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px var(--gold-dim)}
+.share-btn i{margin-right:6px;font-size:14px}
+
+.share-fallback-panel{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-bg);z-index:170;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.share-fallback-panel.active{opacity:1;pointer-events:auto}
+.share-fallback-content{
+  background:var(--bg-panel);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:2px solid var(--border);
+  padding:32px 36px;min-width:340px;max-width:90vw;
+  animation:resultPop .3s ease;text-align:center;
+  border-radius:10px;
+}
+.share-fallback-title{
+  font-size:18px;font-weight:300;letter-spacing:3px;
+  margin-bottom:16px;color:var(--text);
+}
+.share-fallback-text{
+  font-size:14px;color:var(--text-dimmer);font-weight:300;
+  line-height:1.8;margin-bottom:20px;
+  padding:12px 16px;border:1px solid var(--border-lighter);
+  background:var(--bg-card);word-break:break-all;
+  text-align:left;
+  border-radius:10px;
+}
+.share-fallback-btns{
+  display:flex;gap:16px;justify-content:center;
+}
+.share-fallback-btns .btn{min-width:120px}
+
+.theme-toggle-btn{
+  position:absolute;right:16px;
+  padding:8px 12px;border:1px solid var(--border-btn);
+  border-radius:10px;font-size:15px;font-weight:300;
+  cursor:pointer;letter-spacing:2px;
+  background:transparent;color:var(--text-dim);
+  font-family:inherit;transition:all .2s;
+}
+.theme-toggle-btn:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px var(--gold-dim)}
+
+.shop-panel{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-bg);z-index:160;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.shop-panel.active{opacity:1;pointer-events:auto}
+.shop-panel-content{
+  background:var(--bg-panel);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:2px solid var(--border);
+  padding:32px 36px;min-width:360px;
+  border-radius:10px;
+  animation:resultPop .3s ease;
+}
+.shop-panel-title{
+  font-size:20px;font-weight:300;letter-spacing:4px;
+  margin-bottom:6px;color:var(--text);
+}
+.shop-panel-balance{
+  font-size:13px;color:var(--gold);font-family:monospace;
+  margin-bottom:20px;font-weight:300;
+}
+.shop-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 0;border-bottom:1px solid var(--border-lighter);
+}
+.shop-item:last-child{border-bottom:none}
+.shop-item-icon{
+  width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border-light);
+  font-size:16px;flex-shrink:0;
+  border-radius:10px;
+}
+.shop-item-info{flex:1}
+.shop-item-name{font-size:14px;font-weight:300;color:var(--text-dim);margin-bottom:2px}
+.shop-item-desc{font-size:11px;color:var(--text-faint);font-weight:300}
+.shop-item-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.shop-item-price{font-size:13px;color:var(--gold);font-family:monospace;font-weight:300}
+.shop-item-owned{font-size:10px;color:var(--text-faint);font-weight:300}
+.shop-buy-btn{
+  padding:4px 14px;border:1px solid var(--border);
+  border-radius:10px;font-size:11px;font-weight:300;
+  cursor:pointer;background:transparent;color:var(--text-dimmer);
+  font-family:inherit;letter-spacing:1px;transition:all .2s;
+}
+.shop-buy-btn:hover{border-color:var(--gold);color:var(--gold)}
+.shop-buy-btn:disabled{opacity:0.3;cursor:not-allowed;border-color:var(--border-lighter);color:var(--text-faintest)}
+.shop-close-btn{
+  margin-top:20px;padding:8px 24px;
+  border:1px solid var(--border);
+  border-radius:10px;font-size:12px;font-weight:300;
+  cursor:pointer;background:transparent;color:var(--text-dimmer);
+  font-family:inherit;letter-spacing:2px;transition:all .2s;
+}
+.shop-close-btn:hover{border-color:var(--text-dimmer);color:var(--text-dim)}
+
+.inv-bar{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;z-index:50;
+}
+.inv-slot{
+  position:relative;
+  width:40px;height:40px;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid var(--border-light);
+  background:var(--overlay-light);
+  cursor:pointer;transition:all .2s;font-size:16px;
+  border-radius:10px;
+}
+.inv-slot:hover{border-color:var(--text-dimmer)}
+.inv-slot.empty{opacity:0.3;cursor:default}
+.inv-slot.empty:hover{border-color:var(--text-faintest)}
+.inv-slot.used{opacity:0.2;cursor:not-allowed}
+.inv-slot .inv-count{
+  position:absolute;bottom:1px;right:3px;
+  font-size:9px;color:var(--text-dim);font-family:monospace;font-weight:400;
+}
+.inv-slot .inv-key{
+  position:absolute;top:1px;left:3px;
+  font-size:8px;color:var(--text-faint);font-family:monospace;
+}
+
+.minimap-overlay{
+  position:absolute;top:8px;right:8px;z-index:20;
+  border:1px solid var(--border);
+  background:var(--overlay-bg);
+  padding:4px;pointer-events:none;
+  animation:minimapFadeIn .3s ease;
+}
+@keyframes minimapFadeIn{from{opacity:0;transform:scale(0.8)}to{opacity:1;transform:scale(1)}}
+
+.pause-indicator{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  z-index:15;pointer-events:none;
+  font-size:14px;font-weight:300;letter-spacing:3px;
+  color:var(--accent);
+  text-shadow:0 0 12px var(--accent-dim);
+  animation:pausePulse 1s ease-in-out infinite;
+}
+@keyframes pausePulse{0%,100%{opacity:1}50%{opacity:0.5}}
+
+.ach-btn{
+  position:absolute;right:310px;
+  padding:8px 20px;border:1px solid var(--border-btn);
+  border-radius:10px;font-size:13px;font-weight:300;
+  cursor:pointer;letter-spacing:2px;
+  background:transparent;color:var(--text-dim);
+  font-family:inherit;transition:all .2s;
+}
+.ach-btn:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px var(--gold-dim)}
+.ach-btn i{margin-right:6px;font-size:14px}
+
+.ach-panel{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-bg);z-index:160;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.ach-panel.active{opacity:1;pointer-events:auto}
+.ach-panel-content{
+  background:var(--bg-panel);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:2px solid var(--border);
+  padding:32px 36px;min-width:420px;
+  border-radius:10px;
+  animation:resultPop .3s ease;
+}
+.ach-panel-title{
+  font-size:20px;font-weight:300;letter-spacing:4px;
+  margin-bottom:4px;color:var(--text);
+}
+.ach-panel-progress{
+  font-size:12px;color:var(--text-faint);font-weight:300;
+  margin-bottom:20px;font-family:monospace;
+}
+.ach-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.ach-card{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;
+  border:1px solid var(--border-lighter);
+  background:var(--bg-card);
+  transition:all .2s;
+  border-radius:10px;
+}
+.ach-card.locked{opacity:0.4}
+.ach-card.unlocked{border-color:var(--text-faint)}
+.ach-card-icon{
+  width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:10px;
+  border:1px solid var(--border-light);
+  font-size:15px;flex-shrink:0;
+}
+.ach-card.locked .ach-card-icon{color:var(--text-faintest)}
+.ach-card-info{flex:1;min-width:0}
+.ach-card-name{font-size:13px;font-weight:300;color:var(--text-dim);margin-bottom:2px}
+.ach-card-desc{font-size:10px;color:var(--text-faint);font-weight:300}
+.ach-card-reward{font-size:11px;color:var(--gold);font-family:monospace;font-weight:300;white-space:nowrap}
+.ach-card .ach-lock{color:var(--text-faintest);font-size:14px;margin-left:4px}
+.ach-card .ach-check{font-size:14px;margin-left:4px}
+.ach-close-btn{
+  margin-top:20px;padding:8px 24px;
+  border:1px solid var(--border);
+  border-radius:10px;font-size:12px;font-weight:300;
+  cursor:pointer;background:transparent;color:var(--text-dimmer);
+  font-family:inherit;letter-spacing:2px;transition:all .2s;
+}
+.ach-close-btn:hover{border-color:var(--text-dimmer);color:var(--text-dim)}
+
+.ach-toast{
+  position:fixed;top:70px;right:24px;z-index:170;
+  border:1px solid var(--gold);
+  background:var(--bg-panel);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  padding:14px 20px;min-width:240px;
+  animation:achToastIn .4s ease,achToastOut .4s ease 2.6s forwards;
+  pointer-events:none;
+}
+@keyframes achToastIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:translateX(0)}}
+@keyframes achToastOut{from{opacity:1;transform:translateX(0)}to{opacity:0;transform:translateX(60px)}}
+.ach-toast-title{font-size:11px;color:var(--text-faint);font-weight:300;letter-spacing:2px;margin-bottom:4px}
+.ach-toast-name{font-size:15px;color:var(--gold);font-weight:300;letter-spacing:1px}
+.ach-toast-reward{font-size:11px;color:var(--text-dimmer);font-family:monospace;margin-top:2px}
+
+.checkin-btn{
+  position:absolute;right:420px;
+  padding:8px 20px;border:1px solid var(--border-btn);
+  border-radius:10px;font-size:13px;font-weight:300;
+  cursor:pointer;letter-spacing:2px;
+  background:transparent;color:var(--text-dim);
+  font-family:inherit;transition:all .2s;
+}
+.checkin-btn:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px var(--gold-dim)}
+.checkin-btn i{margin-right:6px;font-size:14px}
+.checkin-btn.checked{border-color:var(--text-faintest);color:var(--text-faint);cursor:default}
+.checkin-btn.checked:hover{border-color:var(--text-faintest);color:var(--text-faint);box-shadow:none}
+
+.checkin-panel{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-bg);z-index:160;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.checkin-panel.active{opacity:1;pointer-events:auto}
+.checkin-panel-content{
+  background:var(--bg-panel);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:2px solid var(--border);
+  padding:32px 36px;min-width:420px;
+  border-radius:10px;
+  animation:resultPop .3s ease;
+}
+.checkin-panel-title{
+  font-size:20px;font-weight:300;letter-spacing:4px;
+  margin-bottom:4px;color:var(--text);
+}
+.checkin-panel-streak{
+  font-size:12px;color:var(--text-faint);font-weight:300;
+  margin-bottom:20px;font-family:monospace;
+}
+.checkin-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:8px;
+}
+.checkin-day{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 4px;
+  border:1px solid var(--border-lighter);
+  background:var(--bg-card);
+  transition:all .2s;
+  border-radius:10px;
+}
+.checkin-day.done{
+  border-color:var(--text-faint);
+  background:var(--bg-card-done);
+}
+.checkin-day.today{
+  border-color:var(--gold);
+  animation:checkinPulse 2s ease-in-out infinite;
+}
+.checkin-day.today.done{animation:none;border-color:var(--text-faint)}
+@keyframes checkinPulse{0%,100%{border-color:var(--gold-glow);box-shadow:0 0 0 var(--gold-dim)}50%{border-color:var(--gold);box-shadow:0 0 12px var(--gold-shadow)}}
+.checkin-day-num{font-size:11px;color:var(--text-faint);font-weight:300;font-family:monospace}
+.checkin-day-reward{font-size:13px;color:var(--text-dimmer);font-family:monospace;font-weight:300}
+.checkin-day.done .checkin-day-reward{color:var(--gold)}
+.checkin-day .checkin-icon{font-size:12px;color:var(--text-faintest)}
+.checkin-day.done .checkin-icon{color:var(--green)}
+.checkin-day.bonus .checkin-day-reward{color:var(--red)}
+.checkin-close-btn{
+  margin-top:20px;padding:8px 24px;
+  border:1px solid var(--border);
+  border-radius:10px;font-size:12px;font-weight:300;
+  cursor:pointer;background:transparent;color:var(--text-dimmer);
+  font-family:inherit;letter-spacing:2px;transition:all .2s;
+}
+.checkin-close-btn:hover{border-color:var(--text-dimmer);color:var(--text-dim)}
+
+.checkin-toast{
+  position:fixed;top:70px;right:24px;z-index:170;
+  border:1px solid var(--green);
+  background:var(--bg-panel);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  padding:14px 20px;min-width:220px;
+  animation:achToastIn .4s ease,achToastOut .4s ease 2.6s forwards;
+  pointer-events:none;
+}
+.checkin-toast-title{font-size:11px;color:var(--text-faint);font-weight:300;letter-spacing:2px;margin-bottom:4px}
+.checkin-toast-name{font-size:15px;color:var(--green);font-weight:300;letter-spacing:1px}
+.checkin-toast-reward{font-size:11px;color:var(--gold);font-family:monospace;margin-top:2px}
+
+.lb-btn{
+  position:absolute;right:530px;
+  padding:8px 20px;border:1px solid var(--border-btn);
+  border-radius:10px;font-size:13px;font-weight:300;
+  cursor:pointer;letter-spacing:2px;
+  background:transparent;color:var(--text-dim);
+  font-family:inherit;transition:all .2s;
+}
+.lb-btn:hover{border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px var(--gold-dim)}
+.lb-btn i{margin-right:6px;font-size:14px}
+
+.lb-panel{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-bg);z-index:160;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.lb-panel.active{opacity:1;pointer-events:auto}
+.lb-panel-content{
+  background:var(--bg-panel);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:2px solid var(--border);
+  padding:28px 32px;min-width:460px;
+  border-radius:10px;
+  animation:resultPop .3s ease;
+}
+.lb-panel-title{
+  font-size:20px;font-weight:300;letter-spacing:4px;
+  margin-bottom:16px;color:var(--text);
+}
+.lb-tabs{
+  display:flex;gap:0;margin-bottom:16px;
+  border-bottom:1px solid var(--border-lighter);
+}
+.lb-tab{
+  padding:8px 14px;font-size:12px;font-weight:300;
+  cursor:pointer;color:var(--text-faint);
+  border-bottom:2px solid transparent;
+  transition:all .2s;letter-spacing:1px;
+  background:transparent;border-top:none;border-left:none;border-right:none;
+  font-family:inherit;
+}
+.lb-tab:hover{color:var(--text-dimmer)}
+.lb-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.lb-tab i{margin-right:4px}
+.lb-list{min-height:300px}
+.lb-row{
+  display:flex;align-items:center;gap:12px;
+  padding:8px 10px;
+  border-bottom:1px solid var(--border-lighter);
+  transition:all .15s;
+  border-radius:10px;
+}
+.lb-row:hover{background:var(--bg-hover)}
+.lb-row.current{background:var(--gold-shadow);border-left:2px solid var(--gold)}
+.lb-rank{
+  width:28px;text-align:center;font-size:14px;font-weight:300;
+  color:var(--text-faint);font-family:monospace;
+}
+.lb-rank.top1{color:var(--gold);font-size:16px}
+.lb-rank.top2{color:#c0c0c0}
+.lb-rank.top3{color:#cd7f32}
+.lb-name{flex:1;font-size:13px;font-weight:300;color:var(--text-dim)}
+.lb-value{font-size:14px;font-weight:300;color:var(--text-dimmer);font-family:monospace}
+.lb-row.current .lb-name{color:var(--gold)}
+.lb-row.current .lb-value{color:var(--gold)}
+.lb-empty{text-align:center;padding:40px 0;color:var(--text-faintest);font-size:13px;font-weight:300;letter-spacing:2px}
+.lb-close-btn{
+  margin-top:16px;padding:8px 24px;
+  border:1px solid var(--border);
+  border-radius:10px;font-size:12px;font-weight:300;
+  cursor:pointer;background:transparent;color:var(--text-dimmer);
+  font-family:inherit;letter-spacing:2px;transition:all .2s;
+}
+.lb-close-btn:hover{border-color:var(--text-dimmer);color:var(--text-dim)}
+
+.name-modal{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--overlay-strong);z-index:200;
+}
+.name-modal-content{
+  background:var(--bg-panel);
+  border:2px solid var(--border);
+  padding:32px 36px;min-width:320px;text-align:center;
+  animation:resultPop .3s ease;
+  border-radius:10px;
+}
+.name-modal-title{font-size:18px;font-weight:300;letter-spacing:3px;color:var(--text-dim);margin-bottom:16px}
+.name-modal-input{
+  width:100%;padding:10px 14px;
+  border:1px solid var(--border);
+  border-radius:10px;font-size:16px;font-weight:300;
+  background:transparent;color:var(--text);
+  font-family:inherit;letter-spacing:1px;
+  text-align:center;outline:none;
+  transition:border-color .2s;
+}
+.name-modal-input:focus{border-color:var(--gold)}
+.name-modal-input::placeholder{color:var(--text-faintest)}
+.name-modal-btn{
+  margin-top:16px;padding:10px 28px;
+  border:1px solid var(--border);
+  border-radius:10px;font-size:13px;font-weight:300;
+  cursor:pointer;background:transparent;color:var(--text-dimmer);
+  font-family:inherit;letter-spacing:2px;transition:all .2s;
+}
+.name-modal-btn:hover{border-color:var(--gold);color:var(--gold)}
+</style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<div class="start-overlay" id="startOverlay">
+  <div class="start-overlay-title">记忆迷宫</div>
+  <div class="start-overlay-subtitle">MEMORY MAZE</div>
+  <button class="start-overlay-btn" id="startBtn">
+    <span class="btn-glow-line"></span>
+    <span class="btn-text">开始游戏</span>
+  </button>
+  <div class="start-overlay-info">
+    <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> 方向键移动<br>
+    目标：走到终点<br>
+    10个难度递增关卡
+  </div>
+</div>
+
+<div class="game-logo"><i class="fas fa-border-all"></i>记忆迷宫</div>
+
+<div class="withdraw-panel" id="withdrawPanel">
+  <div class="withdraw-panel-content">
+    <div class="withdraw-panel-title"><i class="fas fa-gift" style="margin-right:8px"></i>恭喜提现</div>
+    <div class="withdraw-panel-sub" id="withdrawSub">累计￥50.00，可以提现啦！</div>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button class="btn" onclick="doWithdraw()"><i class="fas fa-money-bill-wave"></i> 立即提现</button>
+      <button class="btn" onclick="closeWithdraw()" style="border-color:var(--border);color:var(--text-dimmer)">继续游戏</button>
+    </div>
+  </div>
+</div>
+
+<div class="ad-panel" id="adPanel">
+  <div class="ad-panel-content">
+    <div class="ad-panel-title"><i class="fas fa-tv" style="margin-right:6px"></i>观看广告中...</div>
+    <div class="ad-panel-count" id="adCount">3</div>
+    <div class="ad-panel-sub">秒后自动复活</div>
+    <button class="ad-skip-btn" id="adSkipBtn" onclick="skipAd()" style="display:none">跳过广告</button>
+  </div>
+</div>
+
+<div class="shop-panel" id="shopPanel">
+  <div class="shop-panel-content">
+    <div class="shop-panel-title"><i class="fas fa-store" style="margin-right:8px"></i>道具商店</div>
+    <div class="shop-panel-balance" id="shopBalance">余额：￥0.00</div>
+    <div id="shopItems"></div>
+    <button class="shop-close-btn" onclick="closeShop()">关闭</button>
+  </div>
+</div>
+
+<div class="ach-panel" id="achPanel">
+  <div class="ach-panel-content">
+    <div class="ach-panel-title"><i class="fas fa-trophy" style="margin-right:8px"></i>成就</div>
+    <div class="ach-panel-progress" id="achProgress">0 / 8</div>
+    <div class="ach-grid" id="achGrid"></div>
+    <button class="ach-close-btn" onclick="closeAchPanel()">关闭</button>
+  </div>
+</div>
+
+<div class="checkin-panel" id="checkinPanel">
+  <div class="checkin-panel-content">
+    <div class="checkin-panel-title"><i class="fas fa-calendar-check" style="margin-right:8px"></i>每日签到</div>
+    <div class="checkin-panel-streak" id="checkinStreak">连续签到：0天</div>
+    <div class="checkin-grid" id="checkinGrid"></div>
+    <button class="checkin-close-btn" onclick="closeCheckinPanel()">关闭</button>
+  </div>
+</div>
+
+<div class="lb-panel" id="lbPanel">
+  <div class="lb-panel-content">
+    <div class="lb-panel-title"><i class="fas fa-list-ol" style="margin-right:8px"></i>排行榜</div>
+    <div class="lb-tabs" id="lbTabs"></div>
+    <div class="lb-list" id="lbList"></div>
+    <button class="lb-close-btn" onclick="closeLbPanel()">关闭</button>
+  </div>
+</div>
+
+<div class="inv-bar" id="invBar"></div>
+
+<div class="game-container">
+  <div class="top-bar">
+    <div class="top-bar-center">
+      <div class="top-bar-item">
+        <span class="top-bar-label">LEVEL</span>
+        <div class="level-select-wrap">
+          <select id="levelSelect" onchange="jumpToLevel(this.value)"></select>
+        </div>
+      </div>
+      <div class="top-bar-item">
+        <span class="top-bar-label">DIFF</span>
+        <span class="top-bar-value" id="diffDisplay">简单</span>
+      </div>
+    </div>
+    <button class="lb-btn" id="lbBtn" onclick="openLbPanel()"><i class="fas fa-list-ol"></i>排行</button>
+    <button class="checkin-btn" id="checkinBtn" onclick="openCheckinPanel()"><i class="fas fa-calendar-check"></i>签到</button>
+    <button class="ach-btn" id="achBtn" onclick="openAchPanel()"><i class="fas fa-trophy"></i>成就</button>
+    <button class="share-btn" id="shareBtn" onclick="doShare('daily')"><i class="fas fa-share-alt"></i>分享</button>
+    <button class="shop-btn" id="shopBtn" onclick="openShop()"><i class="fas fa-store"></i>商店</button>
+    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()"><i class="fas fa-sun"></i></button>
+  </div>
+
+  <div class="game-main">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="gameCanvas"></canvas>
+      <img id="endImg" src="image/bass.gif" style="position:absolute;pointer-events:none;z-index:5;opacity:0.8;">
+      <img id="playerImg" src="image/person.gif" style="position:absolute;pointer-events:none;z-index:10;transition:none;opacity:0.8;">
+      <div class="overlay" id="overlay">
+        <div class="overlay-content">
+          <div class="overlay-title" id="overlayTitle"></div>
+          <div class="overlay-sub" id="overlaySub"></div>
+        </div>
+      </div>
+      <div class="reward-panel" id="rewardPanel">
+        <span class="reward-label">累计金额</span>
+        <div class="reward-amount" id="rewardAmount">￥0.00</div>
+        <span class="reward-target"><i class="fas fa-bullseye" style="color:var(--red);margin-right:4px"></i>满50元可提现</span>
+        <div class="reward-progress-wrap">
+          <div class="reward-progress-bar" id="rewardProgressBar" style="width:0%"></div>
+        </div>
+        <span class="reward-pct" id="rewardPct">0%</span>
+      </div>
+      <div class="timer-ring-wrap" id="timerRingWrap">
+        <canvas class="timer-ring-canvas" id="timerRingCanvas" width="240" height="240"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="side-panel-right">
+    <button class="btn btn-reset" onclick="resetLevel()"><i class="fas fa-undo-alt"></i> 重置</button>
+    <button class="btn btn-next" id="btnNext" onclick="nextLevel()" disabled><i class="fas fa-forward"></i> 下一关</button>
+  </div>
+</div>
+
+<div class="result-panel" id="resultPanel">
+  <div class="result-panel-content">
+    <div class="result-panel-icon" id="resultIcon"></div>
+    <div class="result-panel-title" id="resultTitle"></div>
+    <div class="result-panel-sub" id="resultSub"></div>
+    <div id="resultBtnWrap"></div>
+  </div>
+</div>
+
+<div class="msg-toast" id="msgToast"></div>
+
+<div class="share-fallback-panel" id="shareFallbackPanel">
+  <div class="share-fallback-content">
+    <div class="share-fallback-title"><i class="fas fa-share-alt" style="margin-right:8px"></i>分享</div>
+    <div class="share-fallback-text" id="shareFallbackText"></div>
+    <div class="share-fallback-btns">
+      <button class="btn" onclick="copyShareText()" style="border-color:var(--gold);color:var(--gold)"><i class="fas fa-copy"></i> 复制文案</button>
+      <button class="btn" onclick="closeShareFallback()" style="border-color:var(--border);color:var(--text-dimmer)">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="hint-bar">
+  <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> 移动</span>
+  <span><kbd>1</kbd>透视 <kbd>2</kbd>暂停 <kbd>3</kbd>复活 <kbd>4</kbd>地图</span>
+</div>
+
+<script>
+function initTheme(){
+  const saved=localStorage.getItem('mm_theme')||'dark';
+  document.documentElement.setAttribute('data-theme',saved);
+  updateThemeIcon();
+}
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme')||'dark';
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('mm_theme',next);
+  updateThemeIcon();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{draw();drawTimerRing();}));
+}
+function updateThemeIcon(){
+  const btn=document.getElementById('themeToggleBtn');
+  if(!btn)return;
+  const cur=document.documentElement.getAttribute('data-theme')||'dark';
+  btn.innerHTML=cur==='dark'?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+}
+function getThemeVar(name){
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+initTheme();
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const msgToast = document.getElementById('msgToast');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlaySub = document.getElementById('overlaySub');
+
+const CANVAS_W = 560;
+const CANVAS_H = 560;
+let CELL = 112;
+let WALL_WIDTH = 2;
+
+const LEVELS = [
+  {cols:5,rows:5,memTime:2000,timeLimit:15},
+  {cols:6,rows:5,memTime:1800,timeLimit:14},
+  {cols:6,rows:6,memTime:1600,timeLimit:13},
+  {cols:7,rows:6,memTime:1400,timeLimit:12},
+  {cols:7,rows:7,memTime:1200,timeLimit:11},
+  {cols:8,rows:7,memTime:1100,timeLimit:10},
+  {cols:8,rows:8,memTime:1000,timeLimit:9},
+  {cols:9,rows:8,memTime:900,timeLimit:8},
+  {cols:9,rows:9,memTime:800,timeLimit:7},
+  {cols:10,rows:9,memTime:700,timeLimit:6},
+];
+
+let currentLevel = 0;
+let maze = null;
+let solutionPath = [];
+let playerPos = {x:0,y:0};
+let playerVisual = {x:0,y:0};
+let gameState = 'idle';
+let animFrameId = null;
+let memTimerId = null;
+let memBarTimerId = null;
+let levelPassed = false;
+let stepCount = 0;
+
+let audioCtx = null;
+let audioReady = false;
+
+function getTimeLimit() {
+  return LEVELS[currentLevel] ? LEVELS[currentLevel].timeLimit : 15;
+}
+let timeRemaining = 15;
+let totalPenalty = 0;
+let timerIntervalId = null;
+let lastTimerTick = 0;
+
+const REWARD_PER_LEVEL = [0.99,1.99,2.99,3.99,4.99,5.99,6.99,7.99,8.99,9.99];
+const WITHDRAW_TARGET = 50;
+let totalMoney = 0;
+let failCount = 0;
+let claimedLevels = new Set();
+
+const SHOP_ITEMS = [
+  {id:'lens',    name:'透视镜',   icon:'fas fa-eye',            price:0.5,  color:'#f1c40f', desc:'显示正确路径3秒'},
+  {id:'pause',   name:'时光暂停', icon:'fas fa-pause-circle',   price:0.8,  color:'#00e5ff', desc:'暂停倒计时5秒'},
+  {id:'revive',  name:'复活甲',   icon:'fas fa-shield-alt',     price:1.0,  color:'#2ecc71', desc:'死亡时自动复活'},
+  {id:'minimap', name:'全息地图', icon:'fas fa-map',            price:0.3,  color:'#9b59b6', desc:'显示迷宫缩略图5秒'},
+];
+let inventory = {lens:0, pause:0, revive:0, minimap:0};
+let usedThisLevel = {lens:false, pause:false, revive:false, minimap:false};
+let timerPaused = false;
+let panelOpen = false;
+let timerPauseEnd = 0;
+let hasAutoRevive = false;
+let lensActive = false;
+let lensTimer = null;
+let minimapActive = false;
+let minimapTimer = null;
+
+const ACHIEVEMENTS = [
+  {id:'first_win',  name:'初露锋芒',   icon:'fas fa-flag',            color:'#2ecc71', desc:'首次过关',           reward:0.5},
+  {id:'no_fail_5',  name:'五连绝世',   icon:'fas fa-fire-alt',        color:'#e74c3c', desc:'连续5关无失败',      reward:2},
+  {id:'rich_20',    name:'万元户',     icon:'fas fa-coins',           color:'#f1c40f', desc:'累计获得20元',       reward:3},
+  {id:'speed',      name:'闪电侠',     icon:'fas fa-bolt',            color:'#00e5ff', desc:'剩余时间>10秒过关',  reward:1},
+  {id:'perfect',    name:'完美主义者', icon:'fas fa-gem',             color:'#9b59b6', desc:'单关无撞墙通关',     reward:1},
+  {id:'all_clear',  name:'全通达人',   icon:'fas fa-crown',           color:'#f39c12', desc:'通关全部关卡',        reward:5},
+  {id:'revive_5',   name:'复活大师',   icon:'fas fa-heart',           color:'#e91e63', desc:'使用复活累计5次',    reward:2},
+  {id:'shop_5',     name:'购物狂',     icon:'fas fa-shopping-cart',   color:'#1abc9c', desc:'购买道具累计5次',    reward:2},
+];
+let unlockedAchs = new Set();
+let totalReviveCount = 0;
+let totalBuyCount = 0;
+let consecutiveNoFail = 0;
+let wallHitThisLevel = false;
+
+function getCurrentReward(){
+  return REWARD_PER_LEVEL[currentLevel] || 0.99;
+}
+
+const CHECKIN_REWARDS = [0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0];
+let checkinDay = 0;
+let lastCheckinDate = '';
+let todayCheckedIn = false;
+
+let playerName = '';
+let roundStartTime = 0;
+let roundTotalTime = 0;
+let roundFailCount = 0;
+let roundMoneyEarned = 0;
+let roundCompleted = false;
+
+const LB_TABS = [
+  {id:'time',  name:'最快通关', icon:'fas fa-stopwatch',  unit:'秒', sortAsc:true},
+  {id:'money', name:'最高金额', icon:'fas fa-coins',      unit:'元', sortAsc:false},
+  {id:'fail',  name:'最少失败', icon:'fas fa-shield-alt',  unit:'次', sortAsc:true},
+  {id:'ach',   name:'最高成就', icon:'fas fa-trophy',      unit:'个', sortAsc:false},
+];
+let currentLbTab = 'time';
+let leaderboardData = {time:[], money:[], fail:[], ach:[]};
+
+function saveInventory(){
+  try{ localStorage.setItem('mm_inventory', JSON.stringify(inventory)); }catch(e){}
+}
+function loadInventory(){
+  try{
+    const d = localStorage.getItem('mm_inventory');
+    if(d) inventory = JSON.parse(d);
+  }catch(e){}
+}
+
+function renderShop(){
+  const wrap = document.getElementById('shopItems');
+  document.getElementById('shopBalance').textContent = '余额：￥' + totalMoney.toFixed(2);
+  let html = '';
+  SHOP_ITEMS.forEach(item => {
+    const canBuy = totalMoney >= item.price;
+    html += '<div class="shop-item">' +
+      '<div class="shop-item-icon" style="color:' + item.color + ';border-color:' + item.color + '40"><i class="' + item.icon + '"></i></div>' +
+      '<div class="shop-item-info"><div class="shop-item-name">' + item.name + '</div><div class="shop-item-desc">' + item.desc + '</div></div>' +
+      '<div class="shop-item-right">' +
+        '<div class="shop-item-price">￥' + item.price.toFixed(2) + '</div>' +
+        '<div class="shop-item-owned">已拥有 ' + inventory[item.id] + '</div>' +
+        '<button class="shop-buy-btn" onclick="buyItem(\'' + item.id + '\')"' + (canBuy ? '' : ' disabled') + '>购买</button>' +
+      '</div></div>';
+  });
+  wrap.innerHTML = html;
+}
+
+function openShop(){
+  panelOpen = true;
+  renderShop();
+  document.getElementById('shopPanel').classList.add('active');
+}
+function closeShop(){
+  panelOpen = false;
+  document.getElementById('shopPanel').classList.remove('active');
+}
+
+function buyItem(id){
+  const item = SHOP_ITEMS.find(i => i.id === id);
+  if(!item || totalMoney < item.price) return;
+  totalMoney -= item.price;
+  inventory[id]++;
+  totalBuyCount++;
+  saveInventory();
+  saveAchs();
+  updateRewardUI();
+  renderShop();
+  renderInvBar();
+  checkAchievements();
+  showToast('<i class="' + item.icon + '" style="color:' + item.color + '"></i> 购买 ' + item.name, 'success');
+}
+
+function renderInvBar(){
+  const bar = document.getElementById('invBar');
+  const keys = ['1','2','3','4'];
+  let html = '';
+  SHOP_ITEMS.forEach((item, i) => {
+    const count = inventory[item.id];
+    const used = usedThisLevel[item.id];
+    const cls = count <= 0 ? 'empty' : (used ? 'used' : '');
+    html += '<div class="inv-slot ' + cls + '" onclick="useItem(\'' + item.id + '\')" title="' + item.name + '">' +
+      '<span class="inv-key">' + keys[i] + '</span>' +
+      '<i class="' + item.icon + '" style="color:' + item.color + '"></i>' +
+      (count > 0 ? '<span class="inv-count">' + count + '</span>' : '') +
+      '</div>';
+  });
+  bar.innerHTML = html;
+}
+
+function useItem(id){
+  if(gameState !== 'playing') return;
+  if(inventory[id] <= 0) return;
+  if(usedThisLevel[id]) return;
+
+  switch(id){
+    case 'lens': activateLens(); break;
+    case 'pause': activatePause(); break;
+    case 'revive': activateRevive(); break;
+    case 'minimap': activateMinimap(); break;
+  }
+}
+
+function activateLens(){
+  if(lensActive) return;
+  usedThisLevel.lens = true;
+  inventory.lens--;
+  saveInventory();
+  lensActive = true;
+  draw();
+  showToast('<i class="fas fa-eye" style="color:var(--gold)"></i> 透视镜：显示路径3秒', 'hint');
+  if(lensTimer) clearTimeout(lensTimer);
+  lensTimer = setTimeout(() => {
+    lensActive = false;
+    lensTimer = null;
+    draw();
+  }, 3000);
+  renderInvBar();
+  lensAnimLoop();
+}
+
+let lensAnimId = null;
+function lensAnimLoop(){
+  if(!lensActive) { lensAnimId = null; return; }
+  draw();
+  lensAnimId = requestAnimationFrame(lensAnimLoop);
+}
+
+function activatePause(){
+  usedThisLevel.pause = true;
+  inventory.pause--;
+  saveInventory();
+  timerPaused = true;
+  timerPauseEnd = performance.now() + 5000;
+  showToast('<i class="fas fa-pause-circle" style="color:#00e5ff"></i> 时光暂停：5秒', 'hint');
+
+  const indicator = document.createElement('div');
+  indicator.className = 'pause-indicator';
+  indicator.id = 'pauseIndicator';
+  indicator.innerHTML = '<i class="fas fa-pause"></i> 已暂停';
+  document.getElementById('canvasWrap').appendChild(indicator);
+
+  setTimeout(() => {
+    timerPaused = false;
+    const el = document.getElementById('pauseIndicator');
+    if(el) el.remove();
+    lastTimerTick = performance.now();
+  }, 5000);
+  renderInvBar();
+}
+
+function activateRevive(){
+  usedThisLevel.revive = true;
+  inventory.revive--;
+  saveInventory();
+  hasAutoRevive = true;
+  showToast('<i class="fas fa-shield-alt" style="color:var(--green)"></i> 复活甲已装备', 'hint');
+  renderInvBar();
+}
+
+function activateMinimap(){
+  if(minimapActive) return;
+  usedThisLevel.minimap = true;
+  inventory.minimap--;
+  saveInventory();
+  minimapActive = true;
+  drawMinimap();
+  showToast('<i class="fas fa-map" style="color:#9b59b6"></i> 全息地图：5秒', 'hint');
+  if(minimapTimer) clearTimeout(minimapTimer);
+  minimapTimer = setTimeout(() => {
+    minimapActive = false;
+    minimapTimer = null;
+    const el = document.getElementById('minimapOverlay');
+    if(el) el.remove();
+  }, 5000);
+  renderInvBar();
+}
+
+function drawMinimap(){
+  let el = document.getElementById('minimapOverlay');
+  if(el) el.remove();
+  if(!maze) return;
+  const lv = LEVELS[currentLevel];
+  const s = Math.min(120 / lv.cols, 120 / lv.rows);
+  const w = lv.cols * s;
+  const h = lv.rows * s;
+  const mazeWall = getThemeVar('--maze-wall');
+  const mazePath = getThemeVar('--maze-path');
+
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const mc = c.getContext('2d');
+
+  mc.fillStyle = mazePath === 'transparent' ? getThemeVar('--bg-panel-solid') : mazePath;
+  mc.fillRect(0, 0, w, h);
+
+  for(let y = 0; y < lv.rows; y++){
+    for(let x = 0; x < lv.cols; x++){
+      const cell = maze[y][x];
+      mc.strokeStyle = mazeWall;
+      mc.lineWidth = 1;
+      if(cell.walls.top)    { mc.beginPath();mc.moveTo(x*s,y*s);mc.lineTo(x*s+s,y*s);mc.stroke(); }
+      if(cell.walls.right)  { mc.beginPath();mc.moveTo(x*s+s,y*s);mc.lineTo(x*s+s,y*s+s);mc.stroke(); }
+      if(cell.walls.bottom) { mc.beginPath();mc.moveTo(x*s,y*s+s);mc.lineTo(x*s+s,y*s+s);mc.stroke(); }
+      if(cell.walls.left)   { mc.beginPath();mc.moveTo(x*s,y*s);mc.lineTo(x*s,y*s+s);mc.stroke(); }
+    }
+  }
+
+  mc.fillStyle = getThemeVar('--accent');
+  mc.fillRect(playerPos.x * s + 1, playerPos.y * s + 1, s - 2, s - 2);
+  mc.fillStyle = getThemeVar('--red');
+  mc.fillRect((lv.cols-1) * s + 1, (lv.rows-1) * s + 1, s - 2, s - 2);
+
+  const div = document.createElement('div');
+  div.className = 'minimap-overlay';
+  div.id = 'minimapOverlay';
+  c.style.display = 'block';
+  div.appendChild(c);
+  document.getElementById('canvasWrap').appendChild(div);
+}
+function updateRewardUI(){
+  const el = document.getElementById('rewardAmount');
+  const target = totalMoney;
+  const current = parseFloat(el.textContent.replace('￥','')) || 0;
+  animateNumber(el, current, target, 600);
+  const pct = Math.min(100, (totalMoney / WITHDRAW_TARGET) * 100);
+  document.getElementById('rewardProgressBar').style.width = pct + '%';
+  document.getElementById('rewardPct').textContent = pct.toFixed(0) + '%';
+  if(document.getElementById('shopPanel').classList.contains('active')){
+    renderShop();
+  }
+}
+
+function saveAchs(){
+  try{ localStorage.setItem('mm_achs', JSON.stringify([...unlockedAchs])); }catch(e){}
+  try{ localStorage.setItem('mm_ach_stats', JSON.stringify({totalReviveCount,totalBuyCount,consecutiveNoFail})); }catch(e){}
+}
+function loadAchs(){
+  try{
+    const d = localStorage.getItem('mm_achs');
+    if(d) unlockedAchs = new Set(JSON.parse(d));
+    const s = localStorage.getItem('mm_ach_stats');
+    if(s){ const st = JSON.parse(s); totalReviveCount = st.totalReviveCount||0; totalBuyCount = st.totalBuyCount||0; consecutiveNoFail = st.consecutiveNoFail||0; }
+  }catch(e){}
+}
+
+function renderAchPanel(){
+  const grid = document.getElementById('achGrid');
+  document.getElementById('achProgress').textContent = unlockedAchs.size + ' / ' + ACHIEVEMENTS.length;
+  let html = '';
+  ACHIEVEMENTS.forEach(a => {
+    const unlocked = unlockedAchs.has(a.id);
+    html += '<div class="ach-card ' + (unlocked ? 'unlocked' : 'locked') + '">' +
+      '<div class="ach-card-icon" style="' + (unlocked ? 'color:'+a.color+';border-color:'+a.color+'40' : '') + '"><i class="' + (unlocked ? a.icon : 'fas fa-lock') + '"></i></div>' +
+      '<div class="ach-card-info"><div class="ach-card-name">' + a.name + '</div><div class="ach-card-desc">' + a.desc + '</div></div>' +
+      '<div class="ach-card-reward">+' + a.reward.toFixed(2) + '元</div>' +
+      (unlocked ? '<i class="fas fa-check ach-check" style="color:'+a.color+'"></i>' : '') +
+      '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+function openAchPanel(){
+  panelOpen = true;
+  renderAchPanel();
+  document.getElementById('achPanel').classList.add('active');
+}
+function closeAchPanel(){
+  panelOpen = false;
+  document.getElementById('achPanel').classList.remove('active');
+}
+
+function unlockAch(id){
+  if(unlockedAchs.has(id)) return;
+  const ach = ACHIEVEMENTS.find(a => a.id === id);
+  if(!ach) return;
+  unlockedAchs.add(id);
+  totalMoney += ach.reward;
+  saveAchs();
+  updateRewardUI();
+  showAchToast(ach);
+}
+
+function showAchToast(ach){
+  const el = document.createElement('div');
+  el.className = 'ach-toast';
+  el.innerHTML = '<div class="ach-toast-title"><i class="fas fa-trophy" style="margin-right:4px"></i>解锁成就</div>' +
+    '<div class="ach-toast-name"><i class="' + ach.icon + '" style="color:'+ach.color+';margin-right:6px"></i>' + ach.name + '</div>' +
+    '<div class="ach-toast-reward">+' + ach.reward.toFixed(2) + '元</div>';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function checkAchievements(){
+  if(!unlockedAchs.has('first_win') && claimedLevels.size >= 1) unlockAch('first_win');
+  if(!unlockedAchs.has('no_fail_5') && consecutiveNoFail >= 5) unlockAch('no_fail_5');
+  if(!unlockedAchs.has('rich_20') && totalMoney >= 20) unlockAch('rich_20');
+  if(!unlockedAchs.has('all_clear') && claimedLevels.size >= LEVELS.length) unlockAch('all_clear');
+  if(!unlockedAchs.has('revive_5') && totalReviveCount >= 5) unlockAch('revive_5');
+  if(!unlockedAchs.has('shop_5') && totalBuyCount >= 5) unlockAch('shop_5');
+}
+
+function getTodayStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function getYesterdayStr(){
+  const d = new Date(); d.setDate(d.getDate()-1);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function saveCheckin(){
+  try{ localStorage.setItem('mm_checkin', JSON.stringify({checkinDay,lastCheckinDate})); }catch(e){}
+}
+function loadCheckin(){
+  try{
+    const d = localStorage.getItem('mm_checkin');
+    if(d){ const o = JSON.parse(d); checkinDay = o.checkinDay||0; lastCheckinDate = o.lastCheckinDate||''; }
+  }catch(e){}
+  const today = getTodayStr();
+  const yesterday = getYesterdayStr();
+  if(lastCheckinDate === today){
+    todayCheckedIn = true;
+  } else if(lastCheckinDate === yesterday){
+    todayCheckedIn = false;
+  } else {
+    checkinDay = 0;
+    todayCheckedIn = false;
+  }
+  updateCheckinBtn();
+}
+
+function updateCheckinBtn(){
+  const btn = document.getElementById('checkinBtn');
+  if(todayCheckedIn){
+    btn.classList.add('checked');
+  } else {
+    btn.classList.remove('checked');
+  }
+}
+
+function renderCheckinPanel(){
+  const grid = document.getElementById('checkinGrid');
+  document.getElementById('checkinStreak').textContent = '连续签到：' + checkinDay + '天';
+  let html = '';
+  for(let i = 0; i < 7; i++){
+    const dayNum = i + 1;
+    const done = dayNum <= checkinDay;
+    const isToday = dayNum === checkinDay + 1 && !todayCheckedIn;
+    const isBonus = i === 6;
+    html += '<div class="checkin-day' + (done ? ' done' : '') + (isToday ? ' today' : '') + (isBonus ? ' bonus' : '') + '">' +
+      '<div class="checkin-day-num">DAY ' + dayNum + '</div>' +
+      '<div class="checkin-icon"><i class="fas ' + (done ? 'fa-check' : 'fa-lock') + '"></i></div>' +
+      '<div class="checkin-day-reward">+' + CHECKIN_REWARDS[i].toFixed(1) + '元' + (isBonus ? '<br><i class="fas fa-shield-alt" style="font-size:9px"></i>×1' : '') + '</div>' +
+      '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function openCheckinPanel(){
+  panelOpen = true;
+  if(!todayCheckedIn) doCheckin();
+  renderCheckinPanel();
+  document.getElementById('checkinPanel').classList.add('active');
+}
+function closeCheckinPanel(){
+  panelOpen = false;
+  document.getElementById('checkinPanel').classList.remove('active');
+}
+
+function doCheckin(){
+  if(todayCheckedIn) return;
+  const today = getTodayStr();
+  const yesterday = getYesterdayStr();
+  if(lastCheckinDate !== today && lastCheckinDate !== yesterday){
+    checkinDay = 0;
+  }
+  checkinDay++;
+  if(checkinDay > 7) checkinDay = 1;
+  lastCheckinDate = today;
+  todayCheckedIn = true;
+  const reward = CHECKIN_REWARDS[checkinDay - 1];
+  totalMoney += reward;
+  if(checkinDay === 7){
+    inventory.revive++;
+    saveInventory();
+    renderInvBar();
+  }
+  saveCheckin();
+  updateRewardUI();
+  updateCheckinBtn();
+  renderCheckinPanel();
+  checkAchievements();
+  showCheckinToast(reward, checkinDay === 7);
+}
+
+function showCheckinToast(reward, isBonus){
+  const el = document.createElement('div');
+  el.className = 'checkin-toast';
+  el.innerHTML = '<div class="checkin-toast-title"><i class="fas fa-calendar-check" style="margin-right:4px"></i>签到成功</div>' +
+    '<div class="checkin-toast-name">第' + checkinDay + '天签到</div>' +
+    '<div class="checkin-toast-reward">+' + reward.toFixed(1) + '元' + (isBonus ? ' + 复活甲×1' : '') + '</div>';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function saveLb(){
+  try{ localStorage.setItem('mm_lb', JSON.stringify(leaderboardData)); }catch(e){}
+  try{ localStorage.setItem('mm_player', JSON.stringify({name:playerName})); }catch(e){}
+}
+function loadLb(){
+  try{
+    const d = localStorage.getItem('mm_lb');
+    if(d) leaderboardData = JSON.parse(d);
+    const p = localStorage.getItem('mm_player');
+    if(p){ const o = JSON.parse(p); playerName = o.name||''; }
+  }catch(e){}
+  if(!leaderboardData.time) leaderboardData = {time:[], money:[], fail:[], ach:[]};
+  injectFakeLbData();
+}
+
+const FAKE_LB_NAMES = ['迷宫大师','脑力王者','记忆达人','闯关先锋','闪电侠客','冷静猎手','破壁者','寻路高手','迷途知返','暗夜行者','星辰旅人','逻辑之王','极速通关','步步为营','方向感MAX'];
+let fakeLbInjected = false;
+
+function injectFakeLbData(){
+  if(fakeLbInjected) return;
+  try{
+    if(localStorage.getItem('mm_fake_lb')) return;
+  }catch(e){}
+  fakeLbInjected = true;
+  try{ localStorage.setItem('mm_fake_lb','1'); }catch(e){}
+
+  const fakeTime = [
+    {name:'闪电侠客',value:8.2},{name:'迷宫大师',value:12.5},{name:'脑力王者',value:15.3},
+    {name:'极速通关',value:18.7},{name:'记忆达人',value:22.1},{name:'冷静猎手',value:25.8},
+    {name:'破壁者',value:30.4},{name:'寻路高手',value:35.6},{name:'方向感MAX',value:42.3},{name:'步步为营',value:55.9}
+  ];
+  const fakeMoney = [
+    {name:'迷宫大师',value:45.80},{name:'脑力王者',value:38.92},{name:'闪电侠客',value:32.50},
+    {name:'闯关先锋',value:26.90},{name:'记忆达人',value:21.47},{name:'冷静猎手',value:17.83},
+    {name:'逻辑之王',value:14.96},{name:'暗夜行者',value:11.90},{name:'寻路高手',value:8.94},{name:'星辰旅人',value:5.99}
+  ];
+  const fakeFail = [
+    {name:'冷静猎手',value:1},{name:'迷宫大师',value:2},{name:'脑力王者',value:3},
+    {name:'破壁者',value:4},{name:'闪电侠客',value:5},{name:'记忆达人',value:6},
+    {name:'步步为营',value:7},{name:'方向感MAX',value:8},{name:'暗夜行者',value:10},{name:'迷途知返',value:13}
+  ];
+  const fakeAch = [
+    {name:'迷宫大师',value:8},{name:'脑力王者',value:7},{name:'闪电侠客',value:6},
+    {name:'闯关先锋',value:5},{name:'记忆达人',value:5},{name:'冷静猎手',value:4},
+    {name:'破壁者',value:3},{name:'寻路高手',value:3},{name:'暗夜行者',value:2},{name:'星辰旅人',value:1}
+  ];
+
+  leaderboardData.time = fakeTime;
+  leaderboardData.money = fakeMoney;
+  leaderboardData.fail = fakeFail;
+  leaderboardData.ach = fakeAch;
+  saveLb();
+}
+
+function promptPlayerName(callback){
+  if(playerName){ if(callback) callback(); return; }
+  const modal = document.createElement('div');
+  modal.className = 'name-modal';
+  modal.innerHTML = '<div class="name-modal-content">' +
+    '<div class="name-modal-title">输入昵称</div>' +
+    '<input class="name-modal-input" id="nameInput" maxlength="8" placeholder="最多8个字" autofocus>' +
+    '<br><button class="name-modal-btn" id="nameConfirmBtn">确认</button>' +
+    '</div>';
+  document.body.appendChild(modal);
+  const input = document.getElementById('nameInput');
+  const btn = document.getElementById('nameConfirmBtn');
+  function confirm(){
+    const val = input.value.trim();
+    if(!val) return;
+    playerName = val;
+    saveLb();
+    modal.remove();
+    if(callback) callback();
+  }
+  btn.onclick = confirm;
+  input.onkeydown = function(e){ if(e.key === 'Enter') confirm(); };
+  setTimeout(() => input.focus(), 100);
+}
+
+function renderLbTabs(){
+  const tabs = document.getElementById('lbTabs');
+  let html = '';
+  LB_TABS.forEach(t => {
+    html += '<button class="lb-tab' + (currentLbTab === t.id ? ' active' : '') + '" onclick="switchLbTab(\'' + t.id + '\')"><i class="' + t.icon + '"></i>' + t.name + '</button>';
+  });
+  tabs.innerHTML = html;
+}
+
+function switchLbTab(id){
+  currentLbTab = id;
+  renderLbTabs();
+  renderLbList();
+}
+
+function renderLbList(){
+  const list = document.getElementById('lbList');
+  const tab = LB_TABS.find(t => t.id === currentLbTab);
+  const data = leaderboardData[currentLbTab] || [];
+  if(data.length === 0){
+    list.innerHTML = '<div class="lb-empty">暂无记录</div>';
+    return;
+  }
+  let html = '';
+  data.forEach((entry, i) => {
+    const isCurrent = entry.name === playerName;
+    const rankCls = i === 0 ? ' top1' : i === 1 ? ' top2' : i === 2 ? ' top3' : '';
+    let valStr = '';
+    if(currentLbTab === 'time') valStr = entry.value.toFixed(1) + tab.unit;
+    else if(currentLbTab === 'money') valStr = entry.value.toFixed(2) + tab.unit;
+    else if(currentLbTab === 'fail') valStr = entry.value + tab.unit;
+    else if(currentLbTab === 'ach') valStr = entry.value + tab.unit;
+    html += '<div class="lb-row' + (isCurrent ? ' current' : '') + '">' +
+      '<div class="lb-rank' + rankCls + '">' + (i + 1) + '</div>' +
+      '<div class="lb-name">' + entry.name + (isCurrent ? ' <span style="font-size:10px;color:var(--gold);opacity:0.7">（我）</span>' : '') + '</div>' +
+      '<div class="lb-value">' + valStr + '</div>' +
+      '</div>';
+  });
+  list.innerHTML = html;
+}
+
+function openLbPanel(){
+  panelOpen = true;
+  promptPlayerName(() => {
+    renderLbTabs();
+    renderLbList();
+    document.getElementById('lbPanel').classList.add('active');
+  });
+}
+function closeLbPanel(){
+  panelOpen = false;
+  document.getElementById('lbPanel').classList.remove('active');
+}
+
+function addLbEntry(tabId, value){
+  if(!playerName) return;
+  const list = leaderboardData[tabId] || [];
+  const tab = LB_TABS.find(t => t.id === tabId);
+  list.push({name: playerName, value: value});
+  list.sort((a, b) => tab.sortAsc ? a.value - b.value : b.value - a.value);
+  if(list.length > 10) list.length = 10;
+  leaderboardData[tabId] = list;
+  saveLb();
+}
+
+function recordRound(){
+  if(!playerName || !roundCompleted) return;
+  addLbEntry('time', roundTotalTime);
+  addLbEntry('money', roundMoneyEarned);
+  addLbEntry('fail', roundFailCount);
+  addLbEntry('ach', unlockedAchs.size);
+  roundCompleted = false;
+}
+function animateNumber(el, from, to, duration){
+  const start = performance.now();
+  function tick(now){
+    const t = Math.min(1, (now - start) / duration);
+    const ease = 1 - Math.pow(1 - t, 3);
+    const val = from + (to - from) * ease;
+    el.textContent = '￥' + val.toFixed(2);
+    if(t < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+function spawnCoinEffect(){
+  const panel = document.getElementById('rewardPanel');
+  const rect = panel.getBoundingClientRect();
+  for(let i = 0; i < 6; i++){
+    const coin = document.createElement('div');
+    coin.className = 'coin-fly';
+    coin.innerHTML = '<i class="fas fa-coins"></i>';
+    coin.style.left = (rect.left + rect.width/2 + (Math.random()-0.5)*40) + 'px';
+    coin.style.top = (rect.top + 20 + Math.random()*30) + 'px';
+    coin.style.animationDelay = (i * 0.08) + 's';
+    document.body.appendChild(coin);
+    setTimeout(() => coin.remove(), 1000);
+  }
+}
+function spawnBreakEffect(){
+  const panel = document.getElementById('rewardPanel');
+  const rect = panel.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'money-break';
+  el.innerHTML = '<i class="fas fa-coins"></i>';
+  el.style.left = (rect.left + rect.width/2) + 'px';
+  el.style.top = (rect.top + 30) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 700);
+}
+function checkWithdraw(){
+  if(totalMoney >= WITHDRAW_TARGET){
+    document.getElementById('withdrawSub').textContent = '累计￥' + totalMoney.toFixed(2) + '，可以提现啦！';
+    document.getElementById('withdrawPanel').classList.add('active');
+  }
+}
+function doWithdraw(){
+  alert('提现功能演示（实际需接入支付接口）');
+  totalMoney = 0;
+  failCount = 0;
+  inventory = {lens:0, pause:0, revive:0, minimap:0};
+  saveInventory();
+  claimedLevels.clear();
+  currentLevel = 0;
+  updateRewardUI();
+  renderInvBar();
+  document.getElementById('withdrawPanel').classList.remove('active');
+  initLevel(0);
+}
+function closeWithdraw(){
+  document.getElementById('withdrawPanel').classList.remove('active');
+}
+
+let adTimerId = null;
+function showAd(){
+  hideResultPanel();
+  const panel = document.getElementById('adPanel');
+  const countEl = document.getElementById('adCount');
+  const skipBtn = document.getElementById('adSkipBtn');
+  panel.classList.add('active');
+  skipBtn.style.display = 'none';
+  let sec = 3;
+  countEl.textContent = sec;
+
+  adTimerId = setInterval(() => {
+    sec--;
+    countEl.textContent = sec;
+    if(sec <= 1){
+      skipBtn.style.display = 'inline-block';
+    }
+    if(sec <= 0){
+      clearInterval(adTimerId);
+      adTimerId = null;
+      panel.classList.remove('active');
+      doRevive();
+    }
+  }, 1000);
+}
+
+function skipAd(){
+  if(adTimerId){ clearInterval(adTimerId); adTimerId = null; }
+  document.getElementById('adPanel').classList.remove('active');
+  doRevive();
+}
+
+function doRevive(){
+  totalReviveCount++;
+  saveAchs();
+  playerPos = {x:0, y:0};
+  playerVisual = {x:0, y:0};
+  positionPlayerImg();
+  timeRemaining = getTimeLimit();
+  totalPenalty = 0;
+  gameState = 'playing';
+  overlay.classList.remove('active');
+  document.getElementById('timerRingWrap').classList.add('visible');
+  startTimer();
+  draw();
+  showToast('<i class="fas fa-heart"></i> 已复活，再试一次', 'hint');
+}
+
+function initAudio() {
+  if (audioReady) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioReady = true;
+  } catch(e) {}
+}
+
+let toastTimer = null;
+function showToast(html, type) {
+  if (toastTimer) clearTimeout(toastTimer);
+  msgToast.innerHTML = html;
+  msgToast.className = 'msg-toast visible ' + (type || 'hint');
+  toastTimer = setTimeout(() => { msgToast.className = 'msg-toast'; }, 3000);
+}
+
+let currentShareText = '';
+
+function getCanvasBlob() {
+  return new Promise(resolve => {
+    try {
+      canvas.toBlob(blob => resolve(blob), 'image/png');
+    } catch(e) {
+      resolve(null);
+    }
+  });
+}
+
+function generateShareText(type) {
+  const icon = '🏰';
+  const levelNum = currentLevel + 1;
+  const timeUsed = (getTimeLimit() - timeRemaining).toFixed(1);
+  const remaining = Math.max(0, WITHDRAW_TARGET - totalMoney).toFixed(2);
+
+  if (type === 'win') {
+    if (currentLevel === LEVELS.length - 1) {
+      return icon + '我通关了《记忆迷宫》全部' + LEVELS.length + '关！累计获得' + totalMoney.toFixed(2) + '元！你能超越我吗？';
+    }
+    return icon + '我在《记忆迷宫》通过了第' + levelNum + '关！用时' + timeUsed + '秒，获得了' + getCurrentReward().toFixed(2) + '元！快来挑战我吧！';
+  }
+  if (type === 'allclear') {
+    return icon + '我通关了《记忆迷宫》全部' + LEVELS.length + '关！累计获得' + totalMoney.toFixed(2) + '元！你能超越我吗？';
+  }
+  if (type === 'money') {
+    return icon + '我在《记忆迷宫》累计获得了' + totalMoney.toFixed(2) + '元！距离50元提现还差' + remaining + '元！一起玩吧！';
+  }
+  return icon + '挑战脑力！我在《记忆迷宫》连续闯关' + checkinDay + '天！来比比谁更厉害！';
+}
+
+async function doShare(type) {
+  if (type === 'daily') {
+    type = Math.random() < 0.5 ? 'daily' : 'money';
+  }
+  const text = generateShareText(type);
+  currentShareText = text;
+
+  if (navigator.share) {
+    try {
+      const shareData = { title: '记忆迷宫', text: text };
+      const blob = await getCanvasBlob();
+      if (blob) {
+        const file = new File([blob], 'memory-maze.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ ...shareData, files: [file] })) {
+          shareData.files = [file];
+        }
+      }
+      await navigator.share(shareData);
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return;
+    }
+  }
+
+  document.getElementById('shareFallbackText').textContent = text;
+  panelOpen = true;
+  document.getElementById('shareFallbackPanel').classList.add('active');
+}
+
+function closeShareFallback() {
+  panelOpen = false;
+  document.getElementById('shareFallbackPanel').classList.remove('active');
+}
+
+function copyShareText() {
+  if (!currentShareText) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(currentShareText).then(() => {
+      showToast('<i class="fas fa-check"></i> 已复制，快去分享吧！', 'success');
+      closeShareFallback();
+    }).catch(() => {
+      fallbackCopyText(currentShareText);
+    });
+  } else {
+    fallbackCopyText(currentShareText);
+  }
+}
+
+function fallbackCopyText(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('<i class="fas fa-check"></i> 已复制，快去分享吧！', 'success');
+    closeShareFallback();
+  } catch(e) {
+    showToast('<i class="fas fa-times"></i> 复制失败，请手动复制', 'fail');
+  }
+  document.body.removeChild(ta);
+}
+
+function isOnSolutionPath(x, y) {
+  return solutionPath.some(p => p.x === x && p.y === y);
+}
+
+function startTimer() {
+  timeRemaining = getTimeLimit();
+  totalPenalty = 0;
+  lastTimerTick = performance.now();
+
+  document.getElementById('timerRingWrap').classList.add('visible');
+  startTimerRingAnim();
+
+  timerIntervalId = setInterval(() => {
+    if (gameState !== 'playing') return;
+    if(timerPaused || panelOpen){
+      lastTimerTick = performance.now();
+      return;
+    }
+    const now = performance.now();
+    const delta = (now - lastTimerTick) / 1000;
+    lastTimerTick = now;
+
+    timeRemaining = Math.max(0, timeRemaining - delta);
+
+    if (timeRemaining <= 0) {
+      clearInterval(timerIntervalId);
+      stopTimerRingAnim();
+      if(hasAutoRevive){
+        hasAutoRevive = false;
+        playerPos = {x:0, y:0};
+        playerVisual = {x:0, y:0};
+        positionPlayerImg();
+        timeRemaining = getTimeLimit();
+        totalPenalty = 0;
+        gameState = 'playing';
+        showToast('<i class="fas fa-shield-alt" style="color:var(--green)"></i> 复活甲触发！', 'hint');
+        startTimer();
+        draw();
+        return;
+      }
+      gameState = 'timeout';
+      failCount = Math.min(failCount + 1, 2);
+      consecutiveNoFail = 0;
+      roundFailCount++;
+      updateRewardUI();
+      showToast('<i class="fas fa-times-circle"></i> 时间到', 'fail');
+      showResultPanel('fail', '时间到', '');
+      playWallSound();
+    }
+  }, 50);
+}
+
+function stopTimer() {
+  if (timerIntervalId) {
+    clearInterval(timerIntervalId);
+    timerIntervalId = null;
+  }
+  stopTimerRingAnim();
+}
+
+let timerRingAnimId = null;
+function startTimerRingAnim() {
+  if (timerRingAnimId) cancelAnimationFrame(timerRingAnimId);
+  function loop() {
+    drawTimerRing();
+    timerRingAnimId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+function stopTimerRingAnim() {
+  if (timerRingAnimId) {
+    cancelAnimationFrame(timerRingAnimId);
+    timerRingAnimId = null;
+  }
+  drawTimerRing();
+}
+
+function drawTimerRing() {
+  const cvs = document.getElementById('timerRingCanvas');
+  const c = cvs.getContext('2d');
+  const W = 240, H = 240;
+  const cx = W / 2, cy = H / 2;
+  const R = 95;
+  const lineW = 8;
+  const pct = Math.max(0, timeRemaining / getTimeLimit());
+  const angle = pct * Math.PI * 2;
+  const startAngle = -Math.PI / 2;
+
+  c.clearRect(0, 0, W, H);
+
+  c.beginPath();
+  c.arc(cx, cy, R, 0, Math.PI * 2);
+  c.strokeStyle = getThemeVar('--border-lighter');
+  c.lineWidth = lineW;
+  c.stroke();
+
+  let color, glowColor;
+  const isDark = (document.documentElement.getAttribute('data-theme')||'dark') === 'dark';
+  if (pct > 0.3) {
+    color = isDark ? '#00e5ff' : '#00838f';
+    glowColor = isDark ? 'rgba(0,229,255,0.35)' : 'rgba(0,131,143,0.35)';
+  } else if (pct > 0.1) {
+    color = isDark ? '#ff9800' : '#e65100';
+    glowColor = isDark ? 'rgba(255,152,0,0.4)' : 'rgba(230,81,0,0.4)';
+  } else {
+    const flash = Math.sin(performance.now() / 150) > 0;
+    color = flash ? (isDark ? '#ff1744' : '#c62828') : (isDark ? '#ff5252' : '#d32f2f');
+    glowColor = isDark ? 'rgba(255,23,68,0.5)' : 'rgba(198,40,40,0.5)';
+  }
+
+  c.save();
+  c.shadowColor = glowColor;
+  c.shadowBlur = 18;
+  c.beginPath();
+  c.arc(cx, cy, R, startAngle, startAngle + angle);
+  c.strokeStyle = color;
+  c.lineWidth = lineW;
+  c.lineCap = 'round';
+  c.stroke();
+  c.restore();
+
+  const tipX = cx + Math.cos(startAngle + angle) * R;
+  const tipY = cy + Math.sin(startAngle + angle) * R;
+  c.save();
+  c.shadowColor = glowColor;
+  c.shadowBlur = 12;
+  c.beginPath();
+  c.arc(tipX, tipY, 6, 0, Math.PI * 2);
+  c.fillStyle = color;
+  c.fill();
+  c.restore();
+
+  const sec = timeRemaining.toFixed(1);
+  let fontSize = 50;
+  if (timeRemaining < getTimeLimit() * 0.4 && timeRemaining > 0) {
+    const pulse = 1 + Math.sin(performance.now() / 100) * 0.06;
+    fontSize = 50 * pulse;
+  }
+  c.font = `300 ${fontSize}px monospace`;
+  c.textAlign = 'center';
+  c.textBaseline = 'middle';
+  c.fillStyle = color;
+  c.fillText(sec, cx, cy);
+}
+
+function playStepSound(step) {
+  if (!audioCtx) return;
+  const freq = 440 + (step - 1) * 30;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + 0.12);
+}
+
+function playWallSound() {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.value = 220;
+  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + 0.25);
+}
+
+function playWinSound() {
+  if (!audioCtx) return;
+  const notes = [523, 659, 784];
+  notes.forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    const startTime = audioCtx.currentTime + i * 0.15;
+    gain.gain.setValueAtTime(0.22, startTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + 0.3);
+  });
+}
+
+document.getElementById('startBtn').addEventListener('click', function(e) {
+  const btn = this;
+  const rect = btn.getBoundingClientRect();
+  const ripple = document.createElement('span');
+  ripple.className = 'btn-ripple';
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+
+  initAudio();
+  loadInventory();
+  loadAchs();
+  loadCheckin();
+  loadLb();
+  renderInvBar();
+  setTimeout(() => {
+    document.getElementById('startOverlay').classList.add('hidden');
+  }, 200);
+});
+
+function getDifficulty(lv) {
+  if (lv < 3) return {text:'简单', cls:'difficulty-easy'};
+  if (lv < 6) return {text:'中等', cls:'difficulty-medium'};
+  return {text:'困难', cls:'difficulty-hard'};
+}
+
+function updateInfoBar() {
+  const lv = LEVELS[currentLevel];
+  const sel = document.getElementById('levelSelect');
+  if (sel.options.length === 0) {
+    for (let i = 0; i < LEVELS.length; i++) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${i+1} / 10`;
+      sel.appendChild(opt);
+    }
+  }
+  sel.value = currentLevel;
+  const diff = getDifficulty(currentLevel);
+  const diffEl = document.getElementById('diffDisplay');
+  diffEl.textContent = diff.text;
+  diffEl.className = 'top-bar-value ' + diff.cls;
+}
+
+function jumpToLevel(val) {
+  hideResultPanel();
+  currentLevel = parseInt(val);
+  failCount = 0;
+  initLevel(currentLevel);
+}
+
+function generateMaze(cols, rows) {
+  const grid = [];
+  for (let y = 0; y < rows; y++) {
+    grid[y] = [];
+    for (let x = 0; x < cols; x++) {
+      grid[y][x] = {
+        x, y,
+        walls: {top:true, right:true, bottom:true, left:true},
+        visited: false
+      };
+    }
+  }
+
+  const walls = [];
+  const addWalls = (cell) => {
+    const {x,y} = cell;
+    if (y > 0) walls.push({x,y,dir:'top',nx:x,ny:y-1});
+    if (x < cols-1) walls.push({x,y,dir:'right',nx:x+1,ny:y});
+    if (y < rows-1) walls.push({x,y,dir:'bottom',nx:x,ny:y+1});
+    if (x > 0) walls.push({x,y,dir:'left',nx:x-1,ny:y});
+  };
+
+  grid[0][0].visited = true;
+  addWalls(grid[0][0]);
+
+  while (walls.length > 0) {
+    const idx = Math.floor(Math.random() * walls.length);
+    const wall = walls[idx];
+    walls.splice(idx, 1);
+
+    const neighbor = grid[wall.ny][wall.nx];
+    if (neighbor.visited) continue;
+
+    neighbor.visited = true;
+    const cell = grid[wall.y][wall.x];
+
+    if (wall.dir === 'top')    { cell.walls.top = false; neighbor.walls.bottom = false; }
+    if (wall.dir === 'right')  { cell.walls.right = false; neighbor.walls.left = false; }
+    if (wall.dir === 'bottom') { cell.walls.bottom = false; neighbor.walls.top = false; }
+    if (wall.dir === 'left')   { cell.walls.left = false; neighbor.walls.right = false; }
+
+    addWalls(neighbor);
+  }
+
+  return grid;
+}
+
+function findPath(grid, cols, rows) {
+  const start = {x:0,y:0};
+  const end = {x:cols-1,y:rows-1};
+  const visited = new Set();
+  const path = [];
+
+  function dfs(x, y) {
+    if (x === end.x && y === end.y) {
+      path.push({x,y});
+      return true;
+    }
+    visited.add(`${x},${y}`);
+    path.push({x,y});
+
+    const cell = grid[y][x];
+    const dirs = [
+      {dx:0,dy:-1,wall:'top'},
+      {dx:1,dy:0,wall:'right'},
+      {dx:0,dy:1,wall:'bottom'},
+      {dx:-1,dy:0,wall:'left'}
+    ];
+
+    for (const d of dirs) {
+      const nx = x + d.dx;
+      const ny = y + d.dy;
+      if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) continue;
+      if (visited.has(`${nx},${ny}`)) continue;
+      if (cell.walls[d.wall]) continue;
+      if (dfs(nx, ny)) return true;
+    }
+
+    path.pop();
+    return false;
+  }
+
+  dfs(0, 0);
+  return path;
+}
+
+function initLevel(lvIdx) {
+  if (animFrameId) cancelAnimationFrame(animFrameId);
+  if (memTimerId) clearTimeout(memTimerId);
+  if (memBarTimerId) clearInterval(memBarTimerId);
+  if (timerIntervalId) clearInterval(timerIntervalId);
+
+  if(lvIdx === 0){
+    roundStartTime = Date.now();
+    roundTotalTime = 0;
+    roundFailCount = 0;
+    roundMoneyEarned = 0;
+    roundCompleted = false;
+  }
+
+  currentLevel = lvIdx;
+  levelPassed = false;
+  stepCount = 0;
+  timeRemaining = getTimeLimit();
+  totalPenalty = 0;
+  usedThisLevel = {lens:false, pause:false, revive:false, minimap:false};
+  hasAutoRevive = false;
+  lensActive = false;
+  minimapActive = false;
+  wallHitThisLevel = false;
+  timerPaused = false;
+  if(lensTimer){ clearTimeout(lensTimer); lensTimer = null; }
+  if(lensAnimId){ cancelAnimationFrame(lensAnimId); lensAnimId = null; }
+  if(minimapTimer){ clearTimeout(minimapTimer); minimapTimer = null; }
+  const mmEl = document.getElementById('minimapOverlay');
+  if(mmEl) mmEl.remove();
+  const piEl = document.getElementById('pauseIndicator');
+  if(piEl) piEl.remove();
+  overlay.classList.remove('active');
+  hideResultPanel();
+  document.getElementById('timerRingWrap').classList.remove('visible');
+  stopTimerRingAnim();
+
+  const lv = LEVELS[lvIdx];
+  CELL = Math.floor(Math.min(CANVAS_W / lv.cols, CANVAS_H / lv.rows));
+  WALL_WIDTH = 2;
+  canvas.width = lv.cols * CELL;
+  canvas.height = lv.rows * CELL;
+
+  maze = generateMaze(lv.cols, lv.rows);
+  solutionPath = findPath(maze, lv.cols, lv.rows);
+  playerPos = {x:0, y:0};
+  playerVisual = {x:0, y:0};
+
+  updateInfoBar();
+  updateRewardUI();
+  draw();
+
+  gameState = 'memorize';
+  showToast('<i class="fas fa-brain"></i> 记住路径', 'memorize');
+
+  let memElapsed = 0;
+  const memBarWrap = document.querySelector('.memory-bar-wrap');
+  const memBar = document.querySelector('.memory-bar');
+  if (memBarWrap) memBarWrap.style.display = 'block';
+  if (memBar) memBar.style.width = '100%';
+
+  memBarTimerId = setInterval(() => {
+    memElapsed += 50;
+    const pct = Math.max(0, 1 - memElapsed / lv.memTime) * 100;
+    if (memBar) memBar.style.width = pct + '%';
+  }, 50);
+
+  memTimerId = setTimeout(() => {
+    clearInterval(memBarTimerId);
+    gameState = 'playing';
+    showToast('<i class="fas fa-arrows-alt"></i> 用方向键移动到终点', 'hint');
+    renderInvBar();
+    startTimer();
+    draw();
+  }, lv.memTime);
+}
+
+function draw() {
+  if (!maze) return;
+  const lv = LEVELS[currentLevel];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const mazeWall = getThemeVar('--maze-wall');
+  const mazePath = getThemeVar('--maze-path');
+
+  for (let y = 0; y < lv.rows; y++) {
+    for (let x = 0; x < lv.cols; x++) {
+      const px = x * CELL;
+      const py = y * CELL;
+      const cell = maze[y][x];
+
+      ctx.fillStyle = mazePath;
+      ctx.fillRect(px, py, CELL, CELL);
+
+      ctx.strokeStyle = mazeWall;
+      ctx.lineWidth = WALL_WIDTH;
+      if (cell.walls.top)    { ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px+CELL,py);ctx.stroke(); }
+      if (cell.walls.right)  { ctx.beginPath();ctx.moveTo(px+CELL,py);ctx.lineTo(px+CELL,py+CELL);ctx.stroke(); }
+      if (cell.walls.bottom) { ctx.beginPath();ctx.moveTo(px,py+CELL);ctx.lineTo(px+CELL,py+CELL);ctx.stroke(); }
+      if (cell.walls.left)   { ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,py+CELL);ctx.stroke(); }
+    }
+  }
+
+  ctx.strokeStyle = mazeWall;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+  if (gameState === 'memorize' || lensActive) {
+    drawSolutionPath();
+  }
+
+  positionStartEndImgs();
+  positionPlayerImg();
+}
+
+function drawSolutionPath() {
+  if (solutionPath.length === 0) return;
+  const t = performance.now();
+  ctx.save();
+  ctx.strokeStyle = getThemeVar('--text-dimmer');
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.setLineDash([5, 5]);
+  ctx.lineDashOffset = -(t / 50);
+  ctx.shadowColor = getThemeVar('--text-faint');
+  ctx.shadowBlur = 8;
+
+  ctx.beginPath();
+  ctx.moveTo(solutionPath[0].x * CELL + CELL/2, solutionPath[0].y * CELL + CELL/2);
+  for (let i = 1; i < solutionPath.length; i++) {
+    ctx.lineTo(solutionPath[i].x * CELL + CELL/2, solutionPath[i].y * CELL + CELL/2);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  const totalLen = (solutionPath.length - 1);
+  const speed = 0.003;
+  const progress = (t * speed) % 1;
+  const idx = progress * totalLen;
+  const i = Math.floor(idx);
+  const frac = idx - i;
+  if (i < solutionPath.length - 1) {
+    const ax = solutionPath[i].x * CELL + CELL/2;
+    const ay = solutionPath[i].y * CELL + CELL/2;
+    const bx = solutionPath[i+1].x * CELL + CELL/2;
+    const by = solutionPath[i+1].y * CELL + CELL/2;
+    const px = ax + (bx - ax) * frac;
+    const py = ay + (by - ay) * frac;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(px, py, 4, 0, Math.PI * 2);
+    const accentColor = getThemeVar('--accent');
+    ctx.fillStyle = accentColor;
+    ctx.shadowColor = accentColor;
+    ctx.shadowBlur = 16;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function positionStartEndImgs() {
+  const lv = LEVELS[currentLevel];
+  const endEl = document.getElementById('endImg');
+
+  endEl.style.left = ((lv.cols-1) * CELL) + 'px';
+  endEl.style.top = ((lv.rows-1) * CELL) + 'px';
+  endEl.style.width = CELL + 'px';
+  endEl.style.height = CELL + 'px';
+
+  drawStartEndFallback();
+}
+
+function drawStartEndFallback() {
+  if (!maze) return;
+  const lv = LEVELS[currentLevel];
+  const endEl = document.getElementById('endImg');
+
+  if (!endEl.complete || endEl.naturalWidth === 0) {
+    const cx = (lv.cols - 0.5) * CELL, cy = (lv.rows - 0.5) * CELL, r = CELL * 0.25;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = getThemeVar('--text-faint');
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+}
+
+function positionPlayerImg() {
+  const el = document.getElementById('playerImg');
+  if (!el) return;
+  const imgSize = CELL;
+  const px = playerVisual.x * CELL;
+  const py = playerVisual.y * CELL;
+  el.style.left = px + 'px';
+  el.style.top = py + 'px';
+  el.style.width = imgSize + 'px';
+  el.style.height = imgSize + 'px';
+}
+
+function canMove(fromX, fromY, dx, dy) {
+  if (!maze) return false;
+  const lv = LEVELS[currentLevel];
+  const toX = fromX + dx;
+  const toY = fromY + dy;
+  if (toX < 0 || toX >= lv.cols || toY < 0 || toY >= lv.rows) return false;
+
+  const cell = maze[fromY][fromX];
+  if (dx === 0 && dy === -1) return !cell.walls.top;
+  if (dx === 1 && dy === 0) return !cell.walls.right;
+  if (dx === 0 && dy === 1) return !cell.walls.bottom;
+  if (dx === -1 && dy === 0) return !cell.walls.left;
+  return false;
+}
+
+function movePlayer(dx, dy) {
+  if (gameState !== 'playing' || panelOpen) return;
+
+  if (canMove(playerPos.x, playerPos.y, dx, dy)) {
+    playerPos.x += dx;
+    playerPos.y += dy;
+    stepCount++;
+    playStepSound(stepCount);
+
+    if (!isOnSolutionPath(playerPos.x, playerPos.y)) {
+      timeRemaining = Math.max(0, timeRemaining - 0.2);
+      totalPenalty += 0.2;
+      if (timeRemaining <= 0) {
+        stopTimer();
+        gameState = 'timeout';
+        showToast('<i class="fas fa-times-circle"></i> 时间到=', 'fail');
+        showResultPanel('fail', '时间到', '时间耗尽，再试一次吧');
+        playWallSound();
+        return;
+      }
+    }
+
+    animatePlayerMove(playerPos.x, playerPos.y);
+
+    const lv = LEVELS[currentLevel];
+    if (playerPos.x === lv.cols - 1 && playerPos.y === lv.rows - 1) {
+      stopTimer();
+      gameState = 'success';
+      levelPassed = true;
+
+      let reward = 0;
+      if (!claimedLevels.has(currentLevel)) {
+        reward = getCurrentReward();
+        totalMoney += reward;
+        roundMoneyEarned += reward;
+        claimedLevels.add(currentLevel);
+        failCount = 0;
+        consecutiveNoFail++;
+        if(!wallHitThisLevel) unlockAch('perfect');
+        if(timeRemaining > 10) unlockAch('speed');
+        wallHitThisLevel = false;
+        spawnCoinEffect();
+      }
+
+      if(currentLevel === LEVELS.length - 1){
+        roundTotalTime = (Date.now() - roundStartTime) / 1000;
+        roundFailCount += failCount;
+        roundCompleted = true;
+        promptPlayerName(() => recordRound());
+      }
+
+      const amountEl = document.getElementById('rewardAmount');
+      amountEl.classList.remove('bump');
+      void amountEl.offsetWidth;
+      amountEl.classList.add('bump');
+      updateRewardUI();
+
+      checkAchievements();
+
+      showToast('<i class="fas fa-trophy"></i> 过关奖励 ￥' + reward.toFixed(2), 'success');
+      playWinSound();
+
+      showResultPanel('win');
+
+      setTimeout(() => checkWithdraw(), 800);
+    }
+  } else {
+    stopTimer();
+    timeRemaining = Math.max(0, timeRemaining - 1);
+    totalPenalty += 1;
+
+    if(hasAutoRevive){
+      hasAutoRevive = false;
+      playerPos = {x:0, y:0};
+      playerVisual = {x:0, y:0};
+      positionPlayerImg();
+      timeRemaining = getTimeLimit();
+      totalPenalty = 0;
+      gameState = 'playing';
+      showToast('<i class="fas fa-shield-alt" style="color:var(--green)"></i> 复活甲触发！', 'hint');
+      startTimer();
+      draw();
+      return;
+    }
+
+    failCount = Math.min(failCount + 1, 2);
+    wallHitThisLevel = true;
+    consecutiveNoFail = 0;
+    roundFailCount++;
+    spawnBreakEffect();
+    updateRewardUI();
+
+    gameState = 'fail';
+    playWallSound();
+    showToast('<i class="fas fa-times-circle"></i> 撞墙了', 'fail');
+    showResultPanel('fail', '失败', '');
+  }
+}
+
+function animatePlayerMove(targetX, targetY) {
+  const startX = playerVisual.x;
+  const startY = playerVisual.y;
+  const duration = 150;
+  const startTime = performance.now();
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed / duration);
+    const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+
+    playerVisual.x = startX + (targetX - startX) * ease;
+    playerVisual.y = startY + (targetY - startY) * ease;
+    positionPlayerImg();
+
+    if (t < 1) {
+      animFrameId = requestAnimationFrame(step);
+    }
+  }
+  if (animFrameId) cancelAnimationFrame(animFrameId);
+  animFrameId = requestAnimationFrame(step);
+}
+
+function showOverlay(title, sub, type) {
+  const icon = type === 'win' ? '<i class="fas fa-trophy"></i> ' : '<i class="fas fa-times-circle"></i> ';
+  overlayTitle.innerHTML = icon + title;
+  overlayTitle.className = 'overlay-title ' + type;
+  overlaySub.textContent = sub;
+  overlay.classList.add('active');
+}
+
+function showResultPanel(type, title, sub) {
+  const panel = document.getElementById('resultPanel');
+  const iconEl = document.getElementById('resultIcon');
+  const titleEl = document.getElementById('resultTitle');
+  const subEl = document.getElementById('resultSub');
+  const btnWrap = document.getElementById('resultBtnWrap');
+
+  if (type === 'win') {
+    iconEl.innerHTML = '<i class="fas fa-coins"></i>';
+    iconEl.style.display = 'block';
+    iconEl.className = 'result-panel-icon win';
+    titleEl.className = 'result-panel-title win';
+
+    const reward = getCurrentReward();
+    const nextReward = currentLevel < LEVELS.length - 1
+      ? REWARD_PER_LEVEL[currentLevel + 1] || 0.99
+      : 0;
+    const remaining = WITHDRAW_TARGET - totalMoney;
+
+    titleEl.innerHTML = '<i class="fas fa-hand-holding-usd" style="margin-right:8px"></i>恭喜获得 <span class="gold">￥' + reward.toFixed(2) + '</span>！';
+
+    let motivate = '<i class="fas fa-fist-raised icon-gold" style="margin-right:4px"></i> 再接再厉，继续挑战！';
+    if (totalMoney >= 49) {
+      motivate = '<i class="fas fa-bolt icon-gold" style="margin-right:4px"></i> 再闯一关就能提现！';
+    } else if (totalMoney >= 45) {
+      motivate = '<i class="fas fa-star icon-gold" style="margin-right:4px"></i> 再赢5元即可提现！';
+    } else if (totalMoney >= 37.5) {
+      motivate = '<i class="fas fa-fire icon-red" style="margin-right:4px"></i> 还剩不到一局！';
+    } else if (totalMoney >= 25) {
+      motivate = '<i class="fas fa-flag-checkered icon-cyan" style="margin-right:4px"></i> 已完成一半！继续加油！';
+    } else if (totalMoney >= 12.5) {
+      motivate = '<i class="fas fa-thumbs-up icon-cyan" style="margin-right:4px"></i> 已完成四分之一！';
+    }
+
+    let nextLine = '';
+    if (currentLevel < LEVELS.length - 1) {
+      nextLine = '<div class="win-reward-line"><i class="fas fa-arrow-right icon-cyan"></i>下一关奖励：<span class="cyan">￥' + nextReward.toFixed(2) + '</span></div>';
+    }
+
+    subEl.innerHTML =
+      '<div class="win-reward-line"><i class="fas fa-chart-line icon-gold"></i>当前累计：<span class="gold">￥' + totalMoney.toFixed(2) + '</span></div>' +
+      nextLine +
+      '<div class="win-motivate">' + motivate + '</div>';
+
+    if (currentLevel < LEVELS.length - 1) {
+      btnWrap.innerHTML = '<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="nextLevel()" style="border-color:var(--gold);color:var(--gold)"><i class="fas fa-forward"></i> 继续下一关</button><button class="btn" onclick="doShare(\'win\')" style="border-color:var(--border-btn);color:var(--text-dim)"><i class="fas fa-share-alt"></i> 分享</button></div>';
+    } else {
+      btnWrap.innerHTML = '<div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap"><button class="btn" onclick="hideResultPanel()" style="border-color:var(--gold);color:var(--gold)"><i class="fas fa-trophy"></i> 恭喜通关</button><button class="btn" onclick="doShare(\'allclear\')" style="border-color:var(--border-btn);color:var(--text-dim)"><i class="fas fa-share-alt"></i> 分享</button></div>';
+    }
+  } else {
+    iconEl.innerHTML = '<i class="fas fa-heart-broken"></i>';
+    iconEl.style.display = 'block';
+    iconEl.className = 'result-panel-icon lose';
+    titleEl.className = 'result-panel-title lose';
+    titleEl.textContent = '闯关失败';
+
+    let failSub = '<div class="win-reward-line"><i class="fas fa-times-circle icon-red"></i>本次未获得奖励</div>';
+    failSub += '<div class="win-reward-line"><i class="fas fa-exclamation-triangle icon-gold"></i>失败次数：<span class="gold">' + failCount + ' / 2</span></div>';
+    if(failCount >= 2){
+      failSub += '<div class="win-motivate" style="color:var(--red)"><i class="fas fa-exclamation-circle"></i> 再失败将清零全部金额！点击重置将清零并回到第1关</div>';
+    }
+    subEl.innerHTML = failSub;
+
+    let btns = '<div style="display:flex;gap:30px;justify-content:center">';
+    if(failCount > 0){
+      btns += '<button class="btn btn-revive" onclick="showAd()"><i class="fas fa-play-circle"></i> 看广告复活</button>';
+    }
+    btns += '<button class="btn btn-gray" onclick="resetLevel()"><i class="fas fa-undo-alt"></i> 重置关卡</button>';
+    btns += '</div>';
+    btnWrap.innerHTML = btns;
+  }
+
+  panel.classList.add('active');
+}
+
+function hideResultPanel() {
+  document.getElementById('resultPanel').classList.remove('active');
+}
+
+document.addEventListener('keydown', (e) => {
+  if(document.getElementById('shareFallbackPanel').classList.contains('active')){ closeShareFallback(); return; }
+  if(document.getElementById('lbPanel').classList.contains('active')){ closeLbPanel(); return; }
+  if(document.getElementById('checkinPanel').classList.contains('active')){ closeCheckinPanel(); return; }
+  if(document.getElementById('achPanel').classList.contains('active')){ closeAchPanel(); return; }
+  if (gameState !== 'playing') return;
+  switch(e.key) {
+    case 'ArrowUp':    e.preventDefault(); movePlayer(0, -1); break;
+    case 'ArrowDown':  e.preventDefault(); movePlayer(0, 1);  break;
+    case 'ArrowLeft':  e.preventDefault(); movePlayer(-1, 0); break;
+    case 'ArrowRight': e.preventDefault(); movePlayer(1, 0);  break;
+    case '1': useItem('lens'); break;
+    case '2': useItem('pause'); break;
+    case '3': useItem('revive'); break;
+    case '4': useItem('minimap'); break;
+  }
+});
+
+function resetLevel() {
+  hideResultPanel();
+  totalMoney = 0;
+  failCount = 0;
+  consecutiveNoFail = 0;
+  wallHitThisLevel = false;
+  inventory = {lens:0, pause:0, revive:0, minimap:0};
+  saveInventory();
+  unlockedAchs = new Set();
+  totalReviveCount = 0;
+  totalBuyCount = 0;
+  saveAchs();
+  checkinDay = 0;
+  lastCheckinDate = '';
+  todayCheckedIn = false;
+  saveCheckin();
+  updateCheckinBtn();
+  roundStartTime = 0;
+  roundTotalTime = 0;
+  roundFailCount = 0;
+  roundMoneyEarned = 0;
+  roundCompleted = false;
+  spawnBreakEffect();
+  updateRewardUI();
+  renderInvBar();
+  currentLevel = 0;
+  initLevel(0);
+}
+
+function nextLevel() {
+  hideResultPanel();
+  if (currentLevel < LEVELS.length - 1) {
+    currentLevel++;
+    initLevel(currentLevel);
+  }
+}
+
+let memAnimId = null;
+function memorizeAnimLoop() {
+  if (gameState === 'memorize') draw();
+  memAnimId = requestAnimationFrame(memorizeAnimLoop);
+}
+
+const origInitLevel = initLevel;
+initLevel = function(lvIdx) {
+  if (memAnimId) cancelAnimationFrame(memAnimId);
+  origInitLevel(lvIdx);
+  if (gameState === 'memorize') memorizeAnimLoop();
+};
+
+updateRewardUI();
+loadInventory();
+loadAchs();
+loadCheckin();
+loadLb();
+renderInvBar();
+initLevel(currentLevel);
+
+if(!todayCheckedIn){
+  setTimeout(() => {
+    showToast('<i class="fas fa-calendar-check" style="color:var(--green)"></i> 今日尚未签到，点击右上角签到按钮', 'hint');
+  }, 1500);
+}
+
+(function(){
+  const pc = document.getElementById('particleCanvas');
+  const pctx = pc.getContext('2d');
+  let particles = [];
+  let particleAnimId = null;
+  const PARTICLE_COUNT = 80;
+  const CONNECT_DIST = 120;
+
+  function resizeParticleCanvas(){
+    pc.width = window.innerWidth;
+    pc.height = window.innerHeight;
+  }
+  resizeParticleCanvas();
+  window.addEventListener('resize', resizeParticleCanvas);
+
+  function createParticle(){
+    return {
+      x: Math.random() * pc.width,
+      y: Math.random() * pc.height,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      r: Math.random() * 1.5 + 0.5,
+      alpha: Math.random() * 0.5 + 0.2,
+      useAlt: Math.random() > 0.7
+    };
+  }
+
+  for(let i = 0; i < PARTICLE_COUNT; i++) particles.push(createParticle());
+
+  function drawParticles(){
+    pctx.clearRect(0, 0, pc.width, pc.height);
+    const dotColor = getThemeVar('--particle-dot');
+    const dotAltColor = getThemeVar('--particle-dot-alt');
+    const lineColor = getThemeVar('--particle-line');
+
+    for(let i = 0; i < particles.length; i++){
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      if(p.x < 0) p.x = pc.width;
+      if(p.x > pc.width) p.x = 0;
+      if(p.y < 0) p.y = pc.height;
+      if(p.y > pc.height) p.y = 0;
+
+      pctx.beginPath();
+      pctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      const baseColor = p.useAlt ? dotAltColor : dotColor;
+      pctx.fillStyle = baseColor.replace(/[\d.]+\)$/, p.alpha + ')');
+      pctx.fill();
+
+      for(let j = i + 1; j < particles.length; j++){
+        const q = particles[j];
+        const dx = p.x - q.x;
+        const dy = p.y - q.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if(dist < CONNECT_DIST){
+          const lineAlpha = (1 - dist / CONNECT_DIST) * 0.15;
+          pctx.beginPath();
+          pctx.moveTo(p.x, p.y);
+          pctx.lineTo(q.x, q.y);
+          pctx.strokeStyle = lineColor.replace(/[\d.]+\)$/, lineAlpha + ')');
+          pctx.lineWidth = 0.5;
+          pctx.stroke();
+        }
+      }
+    }
+
+    particleAnimId = requestAnimationFrame(drawParticles);
+  }
+
+  drawParticles();
+})();
+</script>
+</body>
+</html>
