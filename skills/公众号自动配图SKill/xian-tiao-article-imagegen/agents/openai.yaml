@@ -1,4 +1,0 @@
-interface:
-  display_name: "线条插画配图生成skill"
-  short_description: "为中文长文自动生成三张温暖手绘线条漫画配图"
-  default_prompt: "Use $xian-tiao-article-imagegen to generate three warm line-comic illustrations for this Chinese article."
